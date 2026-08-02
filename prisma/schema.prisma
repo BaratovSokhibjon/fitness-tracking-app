@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Profile ────────────────────────────────────────────
+
+model Profile {
+  id                  String   @id @default(cuid())
+  age                 Int?
+  height              Float?
+  programStartDate    DateTime?
+  dailyCaloriesTarget Int?
+  dailyProteinTarget  Int?
+  dailyCarbsTarget    Int?
+  dailyFatTarget      Int?
+  dailyWaterTarget    Int?
+  dailyStepsTarget    Int?
+  sleepTarget         Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ─── Program & Workout Templates ────────────────────────
+
+model Program {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?   @db.Text
+  durationWeeks Int       @default(8)
+  isActive      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workouts Workout[]
+}
+
+model Workout {
+  id        String  @id @default(cuid())
+  programId String
+  name      String
+  dayOfWeek Int
+  notes     String? @db.Text
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  program   Program     @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises Exercise[]
+  schedules WorkoutSchedule[]
+  sessions  WorkoutSession[]
+
+  @@unique([programId, dayOfWeek])
+}
+
+model Exercise {
+  id        String  @id @default(cuid())
+  workoutId String
+  name      String
+  sets      Int
+  repRange  String
+  restTime  Int?
+  notes     String? @db.Text
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workout      Workout       @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseLogs ExerciseLog[]
+}
+
+// ─── Workout Calendar ───────────────────────────────────
+
+model WorkoutSchedule {
+  id        String         @id @default(cuid())
+  date      DateTime
+  workoutId String?
+  status    ScheduleStatus @default(PLANNED)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  workout Workout?         @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+  session WorkoutSession?
+
+  @@unique([date])
+}
+
+enum ScheduleStatus {
+  PLANNED
+  COMPLETED
+  SKIPPED
+  REST
+}
+
+// ─── Workout Execution Log ──────────────────────────────
+
+model WorkoutSession {
+  id         String   @id @default(cuid())
+  scheduleId String   @unique
+  workoutId  String
+  date       DateTime
+  duration   Int?
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  schedule     WorkoutSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  workout      Workout         @relation(fields: [workoutId], references: [id], onDelete: Restrict)
+  exerciseLogs ExerciseLog[]
+}
+
+model ExerciseLog {
+  id         String  @id @default(cuid())
+  sessionId  String
+  exerciseId String
+  setNumber  Int
+  weight     Float?
+  reps       Int
+  rpe        Float?
+  notes      String? @db.Text
+  createdAt  DateTime @default(now())
+
+  session  WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, exerciseId, setNumber])
+}
+
+// ─── Daily Check-in ─────────────────────────────────────
+
+model DailyCheckIn {
+  id            String   @id @default(cuid())
+  date          DateTime
+  morningWeight Float?
+  sleepHours    Float?
+  calories      Int?
+  protein       Int?
+  carbs         Int?
+  fat           Int?
+  water         Int?
+  steps         Int?
+  energy        Int?
+  mood          Int?
+  soreness      Int?
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([date])
+}
+
+// ─── Habits ─────────────────────────────────────────────
+
+model Habit {
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  logs HabitLog[]
+
+  @@unique([name])
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  date      DateTime
+  completed Boolean
+  createdAt DateTime @default(now())
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+}
+
+// ─── Body Measurements ──────────────────────────────────
+
+model BodyMeasurement {
+  id         String   @id @default(cuid())
+  date       DateTime
+  weight     Float?
+  chest      Float?
+  waist      Float?
+  hips       Float?
+  neck       Float?
+  leftArm    Float?
+  rightArm   Float?
+  leftThigh  Float?
+  rightThigh Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([date])
+}
+
+// ─── Progress Photos ────────────────────────────────────
+
+model ProgressPhoto {
+  id        String    @id @default(cuid())
+  date      DateTime
+  type      PhotoType
+  imageUrl  String
+  createdAt DateTime  @default(now())
+}
+
+enum PhotoType {
+  FRONT
+  SIDE
+  BACK
+}
+
+// ─── Goals ──────────────────────────────────────────────
+
+model Goal {
+  id           String   @id @default(cuid())
+  name         String
+  targetValue  Float
+  currentValue Float    @default(0)
+  unit         String
+  type         GoalType
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum GoalType {
+  WEIGHT
+  EXERCISE
+  NUTRITION
+  SLEEP
+  STEPS
+  OTHER
+}

@@ -1,0 +1,26 @@
+import "server-only";
+
+import { startOfDay, subDays } from "date-fns";
+import { prisma } from "@/lib/prisma";
+
+export async function getHistoryData(days = 30) {
+  const today = startOfDay(new Date());
+  const start = subDays(today, days - 1);
+
+  const [checkIns, sessions, schedules] = await Promise.all([
+    prisma.dailyCheckIn.findMany({
+      where: { date: { gte: start, lte: today } },
+      orderBy: { date: "asc" },
+    }),
+    prisma.workoutSession.findMany({
+      where: { date: { gte: start, lte: today } },
+      include: { workout: true },
+      orderBy: { date: "asc" },
+    }),
+    prisma.workoutSchedule.findMany({
+      where: { date: { gte: start, lte: today } },
+    }),
+  ]);
+
+  return { checkIns, sessions, schedules, start, today };
+}
