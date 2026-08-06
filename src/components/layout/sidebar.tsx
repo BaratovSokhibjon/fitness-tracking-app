@@ -34,7 +34,7 @@ export function Sidebar() {
     <aside className="hidden w-56 shrink-0 flex-col border-r border-hairline bg-canvas md:flex">
       <div className="flex h-14 items-center gap-2 border-b border-hairline px-4">
         <Barbell className="h-5 w-5 text-ink" />
-        <span className="text-sm font-medium uppercase tracking-wider text-ink">Fitness Tracker</span>
+        <span className="text-sm font-medium uppercase tracking-wider text-ink">Somatix</span>
       </div>
       <nav className="flex-1 py-3">
         {navItems.map((item) => {

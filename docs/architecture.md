@@ -17,7 +17,7 @@
 ## Project Folder Structure
 
 ```
-fitness-tracking/
+somatix/
 ├── prisma/
 │   ├── schema.prisma
 │   ├── migrations/

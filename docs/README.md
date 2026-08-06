@@ -1,6 +1,6 @@
-# Fitness Tracker — Planning Docs
+# Somatix — Planning Docs
 
-Personal fitness tracking application for an 8-week body transformation program.
+Personal body-transformation tracking application for an 8-week program.
 
 ## Philosophy
 

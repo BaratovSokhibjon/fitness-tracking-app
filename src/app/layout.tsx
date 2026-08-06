@@ -18,8 +18,8 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
-  title: "Fitness Tracker",
-  description: "Personal fitness tracking for an 8-week body transformation program.",
+  title: "Somatix",
+  description: "Somatix — personal fitness tracking for an 8-week body transformation program.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
