@@ -56,6 +56,7 @@ export async function logSet(input: LogSetInput) {
     update: {
       weight: data.weight,
       reps: data.reps,
+      durationSec: data.durationSec,
       rpe: data.rpe,
       notes: data.notes,
     },
@@ -65,6 +66,7 @@ export async function logSet(input: LogSetInput) {
       setNumber: data.setNumber,
       weight: data.weight,
       reps: data.reps,
+      durationSec: data.durationSec,
       rpe: data.rpe,
       notes: data.notes,
     },
@@ -125,6 +127,7 @@ export async function completeSession(input: SessionInput) {
         update: {
           weight: log.weight,
           reps: log.reps,
+          durationSec: log.durationSec,
           rpe: log.rpe,
           notes: log.notes,
         },
@@ -134,6 +137,7 @@ export async function completeSession(input: SessionInput) {
           setNumber: log.setNumber,
           weight: log.weight,
           reps: log.reps,
+          durationSec: log.durationSec,
           rpe: log.rpe,
           notes: log.notes,
         },

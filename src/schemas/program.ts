@@ -22,6 +22,7 @@ export type WorkoutInput = z.infer<typeof workoutSchema>;
 export const exerciseSchema = z.object({
   workoutId: z.string().cuid(),
   name: z.string().min(1).max(100),
+  type: z.enum(["WEIGHTED", "BODYWEIGHT", "TIMED"]).optional(),
   sets: z.number().int().min(1).max(20),
   repRange: z.string().min(1).max(20),
   restTime: z.number().int().min(0).max(600).nullable().optional(),

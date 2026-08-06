@@ -8,6 +8,13 @@ import { formatDuration } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+function formatDurationSec(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
 export default async function WorkoutHistoryPage() {
   const [sessions, records] = await Promise.all([getSessionHistory(), getPersonalRecords()]);
 
@@ -34,14 +41,25 @@ export default async function WorkoutHistoryPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
-                  {r.bestEstimated1RM != null && (
-                    <Badge variant="secondary">est. 1RM: {r.bestEstimated1RM} kg</Badge>
-                  )}
-                  {r.maxWeight != null && (
-                    <Badge variant="outline">max weight: {r.maxWeight} kg</Badge>
-                  )}
-                  {r.maxReps > 0 && (
-                    <Badge variant="outline">max reps: {r.maxReps}</Badge>
+                  {r.type === "TIMED" ? (
+                    <>
+                      {r.maxDurationSec != null && (
+                        <Badge variant="secondary">best hold: {formatDurationSec(r.maxDurationSec)}</Badge>
+                      )}
+                      {r.maxReps != null && <Badge variant="outline">max reps: {r.maxReps}</Badge>}
+                    </>
+                  ) : (
+                    <>
+                      {r.bestEstimated1RM != null && r.type === "WEIGHTED" && (
+                        <Badge variant="secondary">est. 1RM: {r.bestEstimated1RM} kg</Badge>
+                      )}
+                      {r.maxWeight != null && r.type === "WEIGHTED" && (
+                        <Badge variant="outline">max weight: {r.maxWeight} kg</Badge>
+                      )}
+                      {r.maxReps != null && (
+                        <Badge variant="outline">max reps: {r.maxReps}</Badge>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>

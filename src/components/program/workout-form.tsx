@@ -20,9 +20,12 @@ const dayNames = [
   { value: "6", label: "Saturday" },
 ];
 
+export type ExerciseType = "WEIGHTED" | "BODYWEIGHT" | "TIMED";
+
 export type ExerciseFormData = {
   id: string;
   name: string;
+  type: ExerciseType;
   sets: number;
   repRange: string;
   restTime: number | null;
@@ -55,6 +58,7 @@ export function WorkoutForm({
 
   const [newExercise, setNewExercise] = useState({
     name: "",
+    type: "WEIGHTED",
     sets: "3",
     repRange: "10-12",
     restTime: "",
@@ -73,6 +77,7 @@ export function WorkoutForm({
         await createExercise({
           workoutId: created.id,
           name: ex.name,
+          type: ex.type,
           sets: ex.sets,
           repRange: ex.repRange,
           restTime: ex.restTime,
@@ -89,6 +94,7 @@ export function WorkoutForm({
     if (!newExercise.name) return;
     const exerciseData = {
       name: newExercise.name,
+      type: newExercise.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED",
       sets: parseInt(newExercise.sets, 10) || 3,
       repRange: newExercise.repRange,
       restTime: newExercise.restTime ? parseInt(newExercise.restTime, 10) : null,
@@ -107,7 +113,7 @@ export function WorkoutForm({
         },
       ]);
     }
-    setNewExercise({ name: "", sets: "3", repRange: "10-12", restTime: "", notes: "", mediaUrl: "" });
+    setNewExercise({ name: "", type: "WEIGHTED", sets: "3", repRange: "10-12", restTime: "", notes: "", mediaUrl: "" });
   }
 
   async function handleDeleteWorkout() {
@@ -185,9 +191,15 @@ export function WorkoutForm({
               {exercises.map((ex) => (
                 <div key={ex.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                   <div className="min-w-0">
-                    <p className="font-medium">{ex.name}</p>
+                    <p className="font-medium">
+                      {ex.name}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {ex.type === "BODYWEIGHT" ? "bodyweight" : ex.type === "TIMED" ? "timed" : "weighted"}
+                      </span>
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {ex.sets} sets · {ex.repRange} reps{ex.restTime ? ` · ${ex.restTime}s rest` : ""}
+                      {ex.sets} sets · {ex.repRange} {ex.type === "TIMED" ? "per set" : "reps"}
+                      {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
                     </p>
                     {ex.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{ex.notes}</p>}
                     {ex.mediaUrl && (
@@ -221,18 +233,31 @@ export function WorkoutForm({
             </div>
           )}
 
-          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_5rem_5rem_5rem_auto] sm:items-end">
+          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_7rem_5rem_5rem_5rem_auto] sm:items-end">
             <div className="space-y-1.5">
               <Label htmlFor="ex-name">Exercise</Label>
               <Input id="ex-name" value={newExercise.name} onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })} placeholder="Push-ups" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Type</Label>
+              <Select value={newExercise.type} onValueChange={(v) => setNewExercise({ ...newExercise, type: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WEIGHTED">Weighted</SelectItem>
+                  <SelectItem value="BODYWEIGHT">Bodyweight</SelectItem>
+                  <SelectItem value="TIMED">Timed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ex-sets">Sets</Label>
               <Input id="ex-sets" inputMode="numeric" value={newExercise.sets} onChange={(e) => setNewExercise({ ...newExercise, sets: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ex-reps">Reps</Label>
-              <Input id="ex-reps" value={newExercise.repRange} onChange={(e) => setNewExercise({ ...newExercise, repRange: e.target.value })} placeholder="10-12" />
+              <Label htmlFor="ex-reps">{newExercise.type === "TIMED" ? "Time" : "Reps"}</Label>
+              <Input id="ex-reps" value={newExercise.repRange} onChange={(e) => setNewExercise({ ...newExercise, repRange: e.target.value })} placeholder={newExercise.type === "TIMED" ? "30-60s" : "10-12"} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ex-rest">Rest (s)</Label>

@@ -13,9 +13,12 @@ import { logSet, startSession, completeSession } from "@/actions/session";
 import { epley1RM } from "@/lib/utils";
 import type { ExerciseHistoryRow } from "@/queries/records";
 
+type ExerciseType = "WEIGHTED" | "BODYWEIGHT" | "TIMED";
+
 type Exercise = {
   id: string;
   name: string;
+  type: ExerciseType;
   sets: number;
   repRange: string;
   restTime: number | null;
@@ -27,11 +30,12 @@ type Log = {
   exerciseId: string;
   setNumber: number;
   weight: number | null;
-  reps: number;
+  reps: number | null;
+  durationSec: number | null;
   rpe: number | null;
 };
 
-type SetState = { weight: string; reps: string; rpe: string };
+type SetState = { weight: string; reps: string; durationSec: string; rpe: string };
 
 type HistorySession = { date: Date; rows: ExerciseHistoryRow[] };
 
@@ -71,6 +75,7 @@ export function WorkoutSession({
         rows.push({
           weight: log?.weight != null ? String(log.weight) : "",
           reps: log?.reps != null ? String(log.reps) : "",
+          durationSec: log?.durationSec != null ? String(log.durationSec) : "",
           rpe: log?.rpe != null ? String(log.rpe) : "",
         });
       }
@@ -133,7 +138,8 @@ export function WorkoutSession({
   function finishSet(exercise: Exercise, index: number) {
     const row = sets[exercise.id][index];
     const reps = parseInt(row.reps, 10);
-    if (Number.isNaN(reps)) return;
+    const duration = parseInt(row.durationSec, 10);
+    if (Number.isNaN(reps) && Number.isNaN(duration)) return;
 
     void (async () => {
       await startSession(scheduleId);
@@ -141,8 +147,9 @@ export function WorkoutSession({
         scheduleId,
         exerciseId: exercise.id,
         setNumber: index + 1,
-        weight: row.weight ? parseFloat(row.weight) : null,
-        reps,
+        weight: exercise.type === "WEIGHTED" && row.weight ? parseFloat(row.weight) : null,
+        reps: exercise.type !== "TIMED" && !Number.isNaN(reps) ? reps : null,
+        durationSec: exercise.type === "TIMED" && !Number.isNaN(duration) ? duration : null,
         rpe: row.rpe ? parseFloat(row.rpe) : null,
       });
     })();
@@ -153,16 +160,18 @@ export function WorkoutSession({
     }
   }
 
-  async function saveSetValues(exercise: Exercise, index: number, weight: string, reps: string, rpe: string) {
+  async function saveSetValues(exercise: Exercise, index: number, weight: string, reps: string, durationSec: string, rpe: string) {
     const repsNum = parseInt(reps, 10);
-    if (Number.isNaN(repsNum)) return;
+    const durationNum = parseInt(durationSec, 10);
+    if (Number.isNaN(repsNum) && Number.isNaN(durationNum)) return;
     await startSession(scheduleId);
     await logSet({
       scheduleId,
       exerciseId: exercise.id,
       setNumber: index + 1,
-      weight: weight ? parseFloat(weight) : null,
-      reps: repsNum,
+      weight: exercise.type === "WEIGHTED" && weight ? parseFloat(weight) : null,
+      reps: exercise.type !== "TIMED" && !Number.isNaN(repsNum) ? repsNum : null,
+      durationSec: exercise.type === "TIMED" && !Number.isNaN(durationNum) ? durationNum : null,
       rpe: rpe ? parseFloat(rpe) : null,
     });
   }
@@ -186,12 +195,14 @@ export function WorkoutSession({
       sets[ex.id]
         .map((row, i) => {
           const reps = parseInt(row.reps, 10);
-          if (Number.isNaN(reps)) return null;
+          const duration = parseInt(row.durationSec, 10);
+          if (Number.isNaN(reps) && Number.isNaN(duration)) return null;
           return {
             exerciseId: ex.id,
             setNumber: i + 1,
-            weight: row.weight ? parseFloat(row.weight) : null,
-            reps,
+            weight: ex.type === "WEIGHTED" && row.weight ? parseFloat(row.weight) : null,
+            reps: ex.type !== "TIMED" && !Number.isNaN(reps) ? reps : null,
+            durationSec: ex.type === "TIMED" && !Number.isNaN(duration) ? duration : null,
             rpe: row.rpe ? parseFloat(row.rpe) : null,
           };
         })
@@ -212,7 +223,7 @@ export function WorkoutSession({
         workoutId,
         date,
         duration: Math.max(1, Math.round(elapsed / 60)),
-        exerciseLogs: [{ exerciseId: exercises[0]?.id ?? "", setNumber: 1, reps: 0 }],
+        exerciseLogs: [{ exerciseId: exercises[0]?.id ?? "", setNumber: 1, reps: null }],
       });
     }
 
@@ -285,40 +296,66 @@ export function WorkoutSession({
               )}
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-[2rem_1fr_1fr_1fr] gap-2 sm:grid-cols-[2rem_1fr_1fr_1fr]">
+              <div
+                className={
+                  ex.type === "WEIGHTED"
+                    ? "grid grid-cols-[2rem_1fr_1fr_1fr] gap-2"
+                    : "grid grid-cols-[2rem_1fr_1fr] gap-2"
+                }
+              >
                 <div className="text-xs font-medium text-muted-foreground">Set</div>
-                <div className="text-xs font-medium text-muted-foreground">Reps</div>
-                <div className="text-xs font-medium text-muted-foreground">Weight</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {ex.type === "TIMED" ? "Time" : "Reps"}
+                </div>
+                {ex.type === "WEIGHTED" && (
+                  <div className="text-xs font-medium text-muted-foreground">Weight</div>
+                )}
                 <div className="text-xs font-medium text-muted-foreground">RPE</div>
 
                 {sets[ex.id]?.map((row, i) => {
                   const repsNum = parseInt(row.reps, 10);
                   const weightNum = row.weight ? parseFloat(row.weight) : null;
-                  const est1RM = !Number.isNaN(repsNum) ? epley1RM(weightNum, repsNum) : null;
+                  const est1RM =
+                    ex.type === "WEIGHTED" && !Number.isNaN(repsNum) && weightNum != null
+                      ? epley1RM(weightNum, repsNum)
+                      : null;
                   return (
                     <div key={i} className="contents">
                       <div className="flex items-center text-sm text-muted-foreground">{i + 1}</div>
-                      <Input
-                        className="h-8"
-                        inputMode="numeric"
-                        value={row.reps}
-                        onChange={(e) => updateSet(ex.id, i, "reps", e.target.value)}
-                        onBlur={() => finishSet(ex, i)}
-                        placeholder="reps"
-                      />
-                      <Input
-                        className="h-8"
-                        inputMode="decimal"
-                        value={row.weight}
-                        onChange={(e) => updateSet(ex.id, i, "weight", e.target.value)}
-                        onBlur={() => finishSet(ex, i)}
-                        placeholder="kg"
-                      />
+                      {ex.type === "TIMED" ? (
+                        <Input
+                          className="h-8"
+                          inputMode="numeric"
+                          value={row.durationSec}
+                          onChange={(e) => updateSet(ex.id, i, "durationSec", e.target.value)}
+                          onBlur={() => finishSet(ex, i)}
+                          placeholder="sec"
+                        />
+                      ) : (
+                        <Input
+                          className="h-8"
+                          inputMode="numeric"
+                          value={row.reps}
+                          onChange={(e) => updateSet(ex.id, i, "reps", e.target.value)}
+                          onBlur={() => finishSet(ex, i)}
+                          placeholder="reps"
+                        />
+                      )}
+                      {ex.type === "WEIGHTED" && (
+                        <Input
+                          className="h-8"
+                          inputMode="decimal"
+                          value={row.weight}
+                          onChange={(e) => updateSet(ex.id, i, "weight", e.target.value)}
+                          onBlur={() => finishSet(ex, i)}
+                          placeholder="kg"
+                        />
+                      )}
                       <Select
                         value={row.rpe}
                         onValueChange={(v) => {
                           updateSet(ex.id, i, "rpe", v);
-                          void saveSetValues(ex, i, row.weight, row.reps, v);
+                          void saveSetValues(ex, i, row.weight, row.reps, row.durationSec, v);
                         }}
                       >
                         <SelectTrigger className="h-8">
@@ -350,7 +387,7 @@ export function WorkoutSession({
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {lastSession.rows.map((r) => (
                       <Badge key={r.setNumber} variant="outline" className="text-xs">
-                        {r.weight != null ? `${r.weight}kg` : "BW"} × {r.reps}
+                        {formatHistorySet(r, ex.type)}
                       </Badge>
                     ))}
                   </div>
@@ -368,5 +405,22 @@ export function WorkoutSession({
       </div>
     </div>
   );
+}
+
+function formatHistorySet(r: ExerciseHistoryRow, type: ExerciseType): string {
+  if (type === "TIMED") {
+    return r.durationSec != null ? `${formatDuration(r.durationSec)}` : "—";
+  }
+  if (type === "WEIGHTED") {
+    return `${r.weight != null ? `${r.weight}kg` : "BW"} × ${r.reps ?? "—"}`;
+  }
+  return `${r.reps ?? "—"} reps`;
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 

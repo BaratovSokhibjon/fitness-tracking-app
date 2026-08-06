@@ -37,10 +37,10 @@ const programWorkouts = [
     dayOfWeek: 1,
     sortOrder: 0,
     exercises: [
-      { name: "Push-ups", sets: 4, repRange: "10-20", restTime: 90 },
-      { name: "Pike Push-ups", sets: 3, repRange: "8-12", restTime: 90 },
-      { name: "Chair Dips", sets: 3, repRange: "10-15", restTime: 90 },
-      { name: "Diamond Push-ups", sets: 3, repRange: "8-12", restTime: 90 },
+      { name: "Push-ups", type: "BODYWEIGHT", sets: 4, repRange: "10-20", restTime: 90 },
+      { name: "Pike Push-ups", type: "BODYWEIGHT", sets: 3, repRange: "8-12", restTime: 90 },
+      { name: "Chair Dips", type: "BODYWEIGHT", sets: 3, repRange: "10-15", restTime: 90 },
+      { name: "Diamond Push-ups", type: "BODYWEIGHT", sets: 3, repRange: "8-12", restTime: 90 },
     ],
   },
   {
@@ -48,10 +48,10 @@ const programWorkouts = [
     dayOfWeek: 3,
     sortOrder: 1,
     exercises: [
-      { name: "Pull-ups", sets: 4, repRange: "6-12", restTime: 90 },
-      { name: "Backpack Rows", sets: 3, repRange: "10-15", restTime: 90 },
-      { name: "Reverse Fly", sets: 3, repRange: "12-15", restTime: 60 },
-      { name: "Bicep Curls", sets: 3, repRange: "10-15", restTime: 60 },
+      { name: "Pull-ups", type: "BODYWEIGHT", sets: 4, repRange: "6-12", restTime: 90 },
+      { name: "Backpack Rows", type: "WEIGHTED", sets: 3, repRange: "10-15", restTime: 90 },
+      { name: "Reverse Fly", type: "BODYWEIGHT", sets: 3, repRange: "12-15", restTime: 60 },
+      { name: "Bicep Curls", type: "WEIGHTED", sets: 3, repRange: "10-15", restTime: 60 },
     ],
   },
   {
@@ -59,10 +59,10 @@ const programWorkouts = [
     dayOfWeek: 5,
     sortOrder: 2,
     exercises: [
-      { name: "Squats", sets: 4, repRange: "12-20", restTime: 90 },
-      { name: "Bulgarian Split Squats", sets: 3, repRange: "10-15", restTime: 90 },
-      { name: "Romanian Deadlift", sets: 3, repRange: "12-15", restTime: 90 },
-      { name: "Calf Raises", sets: 4, repRange: "15-25", restTime: 60 },
+      { name: "Squats", type: "BODYWEIGHT", sets: 4, repRange: "12-20", restTime: 90 },
+      { name: "Bulgarian Split Squats", type: "BODYWEIGHT", sets: 3, repRange: "10-15", restTime: 90 },
+      { name: "Romanian Deadlift", type: "WEIGHTED", sets: 3, repRange: "12-15", restTime: 90 },
+      { name: "Calf Raises", type: "BODYWEIGHT", sets: 4, repRange: "15-25", restTime: 60 },
     ],
   },
   {
@@ -70,10 +70,10 @@ const programWorkouts = [
     dayOfWeek: 6,
     sortOrder: 3,
     exercises: [
-      { name: "Push-ups", sets: 3, repRange: "10-15", restTime: 60 },
-      { name: "Pull-ups", sets: 3, repRange: "6-10", restTime: 60 },
-      { name: "Squats", sets: 3, repRange: "15-20", restTime: 60 },
-      { name: "Plank", sets: 3, repRange: "30-60s", restTime: 45 },
+      { name: "Push-ups", type: "BODYWEIGHT", sets: 3, repRange: "10-15", restTime: 60 },
+      { name: "Pull-ups", type: "BODYWEIGHT", sets: 3, repRange: "6-10", restTime: 60 },
+      { name: "Squats", type: "BODYWEIGHT", sets: 3, repRange: "15-20", restTime: 60 },
+      { name: "Plank", type: "TIMED", sets: 3, repRange: "30-60s", restTime: 45 },
     ],
   },
 ];
@@ -133,6 +133,20 @@ async function main() {
   let program;
   if (existingProgram) {
     program = existingProgram;
+    // Refresh exercise types on existing workouts (idempotent).
+    for (const w of programWorkouts) {
+      const workout = await prisma.workout.findUnique({
+        where: { programId_dayOfWeek: { programId: program.id, dayOfWeek: w.dayOfWeek } },
+      });
+      if (!workout) continue;
+      for (const e of w.exercises) {
+        await prisma.exercise.updateMany({
+          where: { workoutId: workout.id, name: e.name },
+          data: { type: e.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED" },
+        });
+      }
+    }
+    console.log("  program: refreshed exercise types");
   } else {
     program = await prisma.program.create({
       data: {
@@ -146,7 +160,7 @@ async function main() {
             dayOfWeek: w.dayOfWeek,
             sortOrder: w.sortOrder,
             exercises: {
-              create: w.exercises.map((e, i) => ({ ...e, sortOrder: i })),
+              create: w.exercises.map((e, i) => ({ ...e, type: e.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED", sortOrder: i })),
             },
           })),
         },

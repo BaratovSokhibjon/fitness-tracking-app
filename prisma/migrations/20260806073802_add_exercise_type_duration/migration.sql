@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE `Exercise` ADD COLUMN `type` ENUM('WEIGHTED', 'BODYWEIGHT', 'TIMED') NOT NULL DEFAULT 'WEIGHTED';
+
+-- AlterTable
+ALTER TABLE `ExerciseLog` ADD COLUMN `durationSec` INTEGER NULL,
+    MODIFY `reps` INTEGER NULL;

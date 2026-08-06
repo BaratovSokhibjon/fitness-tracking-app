@@ -4,7 +4,8 @@ export const exerciseLogSchema = z.object({
   exerciseId: z.string().cuid(),
   setNumber: z.number().int().min(1).max(20),
   weight: z.number().min(0).max(1000).nullable().optional(),
-  reps: z.number().int().min(0).max(200),
+  reps: z.number().int().min(0).max(200).nullable().optional(),
+  durationSec: z.number().int().min(0).max(3600).nullable().optional(),
   rpe: z.number().min(1).max(10).nullable().optional(),
   notes: z.string().max(500).nullable().optional(),
 });
@@ -27,7 +28,8 @@ export const logSetSchema = z.object({
   exerciseId: z.string().cuid(),
   setNumber: z.number().int().min(1).max(20),
   weight: z.number().min(0).max(1000).nullable().optional(),
-  reps: z.number().int().min(0).max(200),
+  reps: z.number().int().min(0).max(200).nullable().optional(),
+  durationSec: z.number().int().min(0).max(3600).nullable().optional(),
   rpe: z.number().min(1).max(10).nullable().optional(),
   notes: z.string().max(500).nullable().optional(),
 });

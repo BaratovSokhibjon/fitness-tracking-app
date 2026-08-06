@@ -31,6 +31,7 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
         exercises={schedule.workout.exercises.map((e) => ({
           id: e.id,
           name: e.name,
+          type: e.type,
           sets: e.sets,
           repRange: e.repRange,
           restTime: e.restTime,
@@ -46,6 +47,7 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
             setNumber: l.setNumber,
             weight: l.weight,
             reps: l.reps,
+            durationSec: l.durationSec,
             rpe: l.rpe,
           })) ?? []
         }

@@ -31,6 +31,7 @@ export default async function EditWorkoutPage({ params }: { params: Promise<{ id
             name: e.name,
             sets: e.sets,
             repRange: e.repRange,
+            type: e.type,
             restTime: e.restTime,
             notes: e.notes,
             mediaUrl: e.mediaUrl,

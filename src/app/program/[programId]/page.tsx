@@ -56,7 +56,14 @@ export default async function EditProgramPage({ params }: { params: Promise<{ pr
               <ul className="space-y-1 text-sm">
                 {workout.exercises.map((ex) => (
                   <li key={ex.id} className="flex justify-between text-muted-foreground">
-                    <span>{ex.name}</span>
+                    <span>
+                      {ex.name}
+                      {ex.type !== "WEIGHTED" && (
+                        <span className="ml-2 text-xs">
+                          {ex.type === "BODYWEIGHT" ? "(bw)" : "(timed)"}
+                        </span>
+                      )}
+                    </span>
                     <span>
                       {ex.sets} × {ex.repRange}
                     </span>
