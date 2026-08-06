@@ -36,6 +36,52 @@ export async function createFood(input: FoodItemInput) {
   return food;
 }
 
+export async function importFoodsFromJson(json: string) {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    throw new Error("Invalid JSON — could not parse the uploaded file.");
+  }
+
+  const items = Array.isArray(raw) ? raw : [raw];
+  if (items.length === 0) throw new Error("The JSON file contains no food items.");
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const item of items) {
+    const data = foodItemSchema.parse(item);
+    const existing = await prisma.foodItem.findUnique({ where: { name: data.name } });
+    if (existing) {
+      skipped++;
+      continue;
+    }
+    await prisma.foodItem.create({ data });
+    created++;
+  }
+
+  revalidatePath("/foods");
+  return { created, skipped, total: items.length };
+}
+
+export async function exportFoodsJson() {
+  const foods = await prisma.foodItem.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+  });
+  return foods.map((f) => ({
+    name: f.name,
+    servingSize: f.servingSize,
+    servingUnit: f.servingUnit,
+    caloriesPerServing: f.caloriesPerServing,
+    proteinPerServing: f.proteinPerServing,
+    carbsPerServing: f.carbsPerServing,
+    fatPerServing: f.fatPerServing,
+    category: f.category,
+  }));
+}
+
 export async function updateFood(id: string, input: FoodItemInput) {
   const data = foodItemSchema.parse(input);
   const food = await prisma.foodItem.update({ where: { id }, data });
