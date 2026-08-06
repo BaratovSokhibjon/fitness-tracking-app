@@ -26,6 +26,8 @@ export type ExerciseFormData = {
   sets: number;
   repRange: string;
   restTime: number | null;
+  notes: string | null;
+  mediaUrl: string | null;
 };
 
 export function WorkoutForm({
@@ -51,7 +53,14 @@ export function WorkoutForm({
   const [exercises, setExercises] = useState<ExerciseFormData[]>(workout?.exercises ?? []);
   const [saving, setSaving] = useState(false);
 
-  const [newExercise, setNewExercise] = useState({ name: "", sets: "3", repRange: "10-12", restTime: "" });
+  const [newExercise, setNewExercise] = useState({
+    name: "",
+    sets: "3",
+    repRange: "10-12",
+    restTime: "",
+    notes: "",
+    mediaUrl: "",
+  });
 
   async function handleSaveWorkout() {
     setSaving(true);
@@ -67,6 +76,8 @@ export function WorkoutForm({
           sets: ex.sets,
           repRange: ex.repRange,
           restTime: ex.restTime,
+          notes: ex.notes,
+          mediaUrl: ex.mediaUrl,
         });
       }
       router.push(`/program/${programId}`);
@@ -76,28 +87,27 @@ export function WorkoutForm({
 
   async function handleAddExercise() {
     if (!newExercise.name) return;
+    const exerciseData = {
+      name: newExercise.name,
+      sets: parseInt(newExercise.sets, 10) || 3,
+      repRange: newExercise.repRange,
+      restTime: newExercise.restTime ? parseInt(newExercise.restTime, 10) : null,
+      notes: newExercise.notes || null,
+      mediaUrl: newExercise.mediaUrl || null,
+    };
     if (isEdit && workout) {
-      await createExercise({
-        workoutId: workout.id,
-        name: newExercise.name,
-        sets: parseInt(newExercise.sets, 10) || 3,
-        repRange: newExercise.repRange,
-        restTime: newExercise.restTime ? parseInt(newExercise.restTime, 10) : null,
-      });
+      await createExercise({ workoutId: workout.id, ...exerciseData });
       router.refresh();
     } else {
       setExercises((prev) => [
         ...prev,
         {
           id: `temp-${Date.now()}`,
-          name: newExercise.name,
-          sets: parseInt(newExercise.sets, 10) || 3,
-          repRange: newExercise.repRange,
-          restTime: newExercise.restTime ? parseInt(newExercise.restTime, 10) : null,
+          ...exerciseData,
         },
       ]);
     }
-    setNewExercise({ name: "", sets: "3", repRange: "10-12", restTime: "" });
+    setNewExercise({ name: "", sets: "3", repRange: "10-12", restTime: "", notes: "", mediaUrl: "" });
   }
 
   async function handleDeleteWorkout() {
@@ -173,12 +183,23 @@ export function WorkoutForm({
           {exercises.length > 0 && (
             <div className="space-y-2">
               {exercises.map((ex) => (
-                <div key={ex.id} className="flex items-center justify-between rounded-none border px-3 py-2 text-sm">
-                  <div>
+                <div key={ex.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                  <div className="min-w-0">
                     <p className="font-medium">{ex.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {ex.sets} sets · {ex.repRange} reps{ex.restTime ? ` · ${ex.restTime}s rest` : ""}
                     </p>
+                    {ex.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{ex.notes}</p>}
+                    {ex.mediaUrl && (
+                      <a
+                        href={ex.mediaUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-0.5 inline-block text-xs text-primary underline-offset-2 hover:underline"
+                      >
+                        reference
+                      </a>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -200,7 +221,7 @@ export function WorkoutForm({
             </div>
           )}
 
-          <div className="grid gap-3 rounded-none border p-3 sm:grid-cols-[1fr_5rem_5rem_5rem_auto] sm:items-end">
+          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_5rem_5rem_5rem_auto] sm:items-end">
             <div className="space-y-1.5">
               <Label htmlFor="ex-name">Exercise</Label>
               <Input id="ex-name" value={newExercise.name} onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })} placeholder="Push-ups" />
@@ -220,6 +241,28 @@ export function WorkoutForm({
             <Button onClick={handleAddExercise} disabled={!newExercise.name}>
               Add
             </Button>
+          </div>
+
+          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="ex-notes">Cue / notes (optional)</Label>
+              <Input
+                id="ex-notes"
+                value={newExercise.notes}
+                onChange={(e) => setNewExercise({ ...newExercise, notes: e.target.value })}
+                placeholder="Keep elbows tucked"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ex-media">Reference media URL (optional)</Label>
+              <Input
+                id="ex-media"
+                type="url"
+                value={newExercise.mediaUrl}
+                onChange={(e) => setNewExercise({ ...newExercise, mediaUrl: e.target.value })}
+                placeholder="https://youtube.com/…"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

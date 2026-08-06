@@ -26,6 +26,7 @@ export const exerciseSchema = z.object({
   repRange: z.string().min(1).max(20),
   restTime: z.number().int().min(0).max(600).nullable().optional(),
   notes: z.string().max(1000).nullable().optional(),
+  mediaUrl: z.string().max(2000).nullable().optional(),
   sortOrder: z.number().int().optional(),
 });
 

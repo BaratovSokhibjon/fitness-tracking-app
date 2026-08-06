@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { Timer } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { logSet, startSession, completeSession } from "@/actions/session";
+import { epley1RM } from "@/lib/utils";
+import type { ExerciseHistoryRow } from "@/queries/records";
 
 type Exercise = {
   id: string;
@@ -16,6 +19,8 @@ type Exercise = {
   sets: number;
   repRange: string;
   restTime: number | null;
+  notes: string | null;
+  mediaUrl: string | null;
 };
 
 type Log = {
@@ -28,11 +33,14 @@ type Log = {
 
 type SetState = { weight: string; reps: string; rpe: string };
 
+type HistorySession = { date: Date; rows: ExerciseHistoryRow[] };
+
 export function WorkoutSession({
   scheduleId,
   workoutId,
   date,
   exercises,
+  historyByExercise,
   existingLogs,
   isCompleted,
 }: {
@@ -40,6 +48,7 @@ export function WorkoutSession({
   workoutId: string;
   date: string;
   exercises: Exercise[];
+  historyByExercise: Record<string, HistorySession[]>;
   existingLogs: Log[];
   isCompleted: boolean;
 }) {
@@ -47,6 +56,10 @@ export function WorkoutSession({
   const [elapsed, setElapsed] = useState(0);
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
+
+  // Rest timer state
+  const [restSeconds, setRestSeconds] = useState<number | null>(null);
+  const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // initialize set states from existing logs
   const [sets, setSets] = useState<Record<string, SetState[]>>(() => {
@@ -80,6 +93,35 @@ export function WorkoutSession({
     void startSession(scheduleId);
   }, [completed, scheduleId]);
 
+  // Clean up rest timer on unmount
+  useEffect(() => {
+    return () => {
+      if (restTimerRef.current) clearInterval(restTimerRef.current);
+    };
+  }, []);
+
+  function startRestTimer(seconds: number) {
+    if (restTimerRef.current) clearInterval(restTimerRef.current);
+    if (seconds <= 0) return;
+    setRestSeconds(seconds);
+    restTimerRef.current = setInterval(() => {
+      setRestSeconds((s) => {
+        if (s == null || s <= 1) {
+          if (restTimerRef.current) clearInterval(restTimerRef.current);
+          restTimerRef.current = null;
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
+
+  function stopRestTimer() {
+    if (restTimerRef.current) clearInterval(restTimerRef.current);
+    restTimerRef.current = null;
+    setRestSeconds(null);
+  }
+
   function updateSet(exerciseId: string, index: number, field: keyof SetState, value: string) {
     setSets((prev) => {
       const next = { ...prev };
@@ -88,28 +130,36 @@ export function WorkoutSession({
     });
   }
 
-  async function saveSet(exerciseId: string, index: number) {
-    const row = sets[exerciseId][index];
+  function finishSet(exercise: Exercise, index: number) {
+    const row = sets[exercise.id][index];
     const reps = parseInt(row.reps, 10);
     if (Number.isNaN(reps)) return;
-    await startSession(scheduleId);
-    await logSet({
-      scheduleId,
-      exerciseId,
-      setNumber: index + 1,
-      weight: row.weight ? parseFloat(row.weight) : null,
-      reps,
-      rpe: row.rpe ? parseFloat(row.rpe) : null,
-    });
+
+    void (async () => {
+      await startSession(scheduleId);
+      await logSet({
+        scheduleId,
+        exerciseId: exercise.id,
+        setNumber: index + 1,
+        weight: row.weight ? parseFloat(row.weight) : null,
+        reps,
+        rpe: row.rpe ? parseFloat(row.rpe) : null,
+      });
+    })();
+
+    // Auto-start rest timer after the last logged set unless it's the final set.
+    if (index < exercise.sets - 1 && exercise.restTime) {
+      startRestTimer(exercise.restTime);
+    }
   }
 
-  async function saveSetValues(exerciseId: string, index: number, weight: string, reps: string, rpe: string) {
+  async function saveSetValues(exercise: Exercise, index: number, weight: string, reps: string, rpe: string) {
     const repsNum = parseInt(reps, 10);
     if (Number.isNaN(repsNum)) return;
     await startSession(scheduleId);
     await logSet({
       scheduleId,
-      exerciseId,
+      exerciseId: exercise.id,
       setNumber: index + 1,
       weight: weight ? parseFloat(weight) : null,
       reps: repsNum,
@@ -123,8 +173,15 @@ export function WorkoutSession({
     return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
+  function formatRest(seconds: number) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
   async function handleComplete() {
     setSaving(true);
+    stopRestTimer();
     const logs = exercises.flatMap((ex) =>
       sets[ex.id]
         .map((row, i) => {
@@ -179,18 +236,53 @@ export function WorkoutSession({
         </CardHeader>
       </Card>
 
+      {restSeconds !== null && (
+        <Card className={restSeconds === 0 ? "border-emerald-300 bg-emerald-50/50" : "border-primary/40"}>
+          <CardContent className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <Timer className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Rest timer</p>
+                <p className="text-2xl font-bold tabular-nums">
+                  {restSeconds === 0 ? "Rest done — next set!" : formatRest(restSeconds)}
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={stopRestTimer}>
+              {restSeconds === 0 ? "Dismiss" : "Stop"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {exercises.map((ex) => {
-        const targetReps = ex.repRange;
+        const history = historyByExercise[ex.id] ?? [];
+        const lastSession = history[0];
         return (
           <Card key={ex.id}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between text-base">
-                {ex.name}
+                <span className="flex items-center gap-2">
+                  {ex.name}
+                  {ex.mediaUrl && (
+                    <a
+                      href={ex.mediaUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary underline-offset-2 hover:underline"
+                    >
+                      reference
+                    </a>
+                  )}
+                </span>
                 <Badge variant="secondary">
-                  {ex.sets} × {targetReps}
+                  {ex.sets} × {ex.repRange}
                   {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
                 </Badge>
               </CardTitle>
+              {ex.notes && (
+                <CardDescription className="text-xs">{ex.notes}</CardDescription>
+              )}
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-[2rem_1fr_1fr_1fr] gap-2 sm:grid-cols-[2rem_1fr_1fr_1fr]">
@@ -199,50 +291,75 @@ export function WorkoutSession({
                 <div className="text-xs font-medium text-muted-foreground">Weight</div>
                 <div className="text-xs font-medium text-muted-foreground">RPE</div>
 
-                {sets[ex.id]?.map((row, i) => (
-                  <div key={i} className="contents">
-                    <div className="flex items-center text-sm text-muted-foreground">{i + 1}</div>
-                    <Input
-                      className="h-8"
-                      inputMode="numeric"
-                      value={row.reps}
-                      onChange={(e) => updateSet(ex.id, i, "reps", e.target.value)}
-                      onBlur={() => saveSet(ex.id, i)}
-                      placeholder="reps"
-                    />
-                    <Input
-                      className="h-8"
-                      inputMode="decimal"
-                      value={row.weight}
-                      onChange={(e) => updateSet(ex.id, i, "weight", e.target.value)}
-                      onBlur={() => saveSet(ex.id, i)}
-                      placeholder="kg"
-                    />
-                    <Select
-                      value={row.rpe}
-                      onValueChange={(v) => {
-                        updateSet(ex.id, i, "rpe", v);
-                        void saveSetValues(ex.id, i, row.weight, row.reps, v);
-                      }}
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="RPE" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rpe) => (
-                          <SelectItem key={rpe} value={String(rpe)}>
-                            {rpe}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
+                {sets[ex.id]?.map((row, i) => {
+                  const repsNum = parseInt(row.reps, 10);
+                  const weightNum = row.weight ? parseFloat(row.weight) : null;
+                  const est1RM = !Number.isNaN(repsNum) ? epley1RM(weightNum, repsNum) : null;
+                  return (
+                    <div key={i} className="contents">
+                      <div className="flex items-center text-sm text-muted-foreground">{i + 1}</div>
+                      <Input
+                        className="h-8"
+                        inputMode="numeric"
+                        value={row.reps}
+                        onChange={(e) => updateSet(ex.id, i, "reps", e.target.value)}
+                        onBlur={() => finishSet(ex, i)}
+                        placeholder="reps"
+                      />
+                      <Input
+                        className="h-8"
+                        inputMode="decimal"
+                        value={row.weight}
+                        onChange={(e) => updateSet(ex.id, i, "weight", e.target.value)}
+                        onBlur={() => finishSet(ex, i)}
+                        placeholder="kg"
+                      />
+                      <Select
+                        value={row.rpe}
+                        onValueChange={(v) => {
+                          updateSet(ex.id, i, "rpe", v);
+                          void saveSetValues(ex, i, row.weight, row.reps, v);
+                        }}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="RPE" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rpe) => (
+                            <SelectItem key={rpe} value={String(rpe)}>
+                              {rpe}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {est1RM != null && (
+                        <div className="col-span-4 text-right text-xs text-muted-foreground">
+                          est. 1RM: {est1RM} kg
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+
+              {lastSession && lastSession.rows.length > 0 && (
+                <div className="mt-3 rounded-md bg-muted/50 p-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Last workout — {format(new Date(lastSession.date), "MMM d")}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {lastSession.rows.map((r) => (
+                      <Badge key={r.setNumber} variant="outline" className="text-xs">
+                        {r.weight != null ? `${r.weight}kg` : "BW"} × {r.reps}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
-          </Card>
-        );
-      })}
+        </Card>
+      );
+    })}
 
       <div className="flex justify-end">
         <Button size="lg" onClick={handleComplete} disabled={saving || completed}>
@@ -252,3 +369,4 @@ export function WorkoutSession({
     </div>
   );
 }
+

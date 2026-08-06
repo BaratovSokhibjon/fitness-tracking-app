@@ -37,3 +37,8 @@ export function percent(part: number, total: number): number {
   if (total <= 0) return 0;
   return Math.min(100, Math.round((part / total) * 100));
 }
+
+export function epley1RM(weight: number | null, reps: number): number | null {
+  if (weight == null || weight <= 0 || reps <= 0) return null;
+  return Math.round(weight * (1 + reps / 30) * 10) / 10;
+}

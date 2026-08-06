@@ -12,13 +12,22 @@ export async function startSession(scheduleId: string) {
   });
   if (!schedule?.workout) throw new Error("No workout scheduled for this date");
 
-  if (schedule.session) return schedule.session;
+  if (schedule.session) {
+    if (!schedule.session.startedAt) {
+      await prisma.workoutSession.update({
+        where: { id: schedule.session.id },
+        data: { startedAt: new Date() },
+      });
+    }
+    return schedule.session;
+  }
 
   const session = await prisma.workoutSession.create({
     data: {
       scheduleId,
       workoutId: schedule.workout.id,
       date: startOfDay(schedule.date),
+      startedAt: new Date(),
     },
   });
 
@@ -76,6 +85,13 @@ export async function completeSession(input: SessionInput) {
   if (!schedule) throw new Error("Schedule not found");
 
   let session = schedule.session;
+  const finishedAt = new Date();
+
+  // Derive duration from startedAt when not supplied by the client.
+  let duration = data.duration;
+  if (!duration && session?.startedAt) {
+    duration = Math.max(1, Math.round((finishedAt.getTime() - session.startedAt.getTime()) / 60000));
+  }
 
   const upserted = await prisma.$transaction(async (tx) => {
     if (!session) {
@@ -84,14 +100,16 @@ export async function completeSession(input: SessionInput) {
           scheduleId,
           workoutId: data.workoutId,
           date: startOfDay(new Date(data.date)),
-          duration: data.duration,
+          startedAt: new Date(),
+          finishedAt,
+          duration,
           notes: data.notes,
         },
       });
     } else {
       session = await tx.workoutSession.update({
         where: { id: session.id },
-        data: { duration: data.duration, notes: data.notes },
+        data: { finishedAt, duration, notes: data.notes },
       });
     }
 
