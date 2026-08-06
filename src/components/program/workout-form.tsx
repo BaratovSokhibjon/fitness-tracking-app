@@ -7,7 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createWorkout, updateWorkout, deleteWorkout, createExercise, deleteExercise } from "@/actions/workout";
+import {
+  createWorkout,
+  updateWorkout,
+  deleteWorkout,
+  createExercise,
+  deleteExercise,
+  createExerciseLibrary,
+  searchExerciseLibrary,
+} from "@/actions/workout";
 import { getProgramList } from "@/queries/calendar";
 
 const dayNames = [
@@ -22,15 +30,24 @@ const dayNames = [
 
 export type ExerciseType = "WEIGHTED" | "BODYWEIGHT" | "TIMED";
 
+export type LibraryExercise = {
+  id: string;
+  name: string;
+  type: ExerciseType;
+  muscleGroup: string | null;
+  equipment: string | null;
+  videoUrl: string | null;
+};
+
 export type ExerciseFormData = {
   id: string;
+  exerciseId: string;
   name: string;
   type: ExerciseType;
   sets: number;
   repRange: string;
   restTime: number | null;
   notes: string | null;
-  mediaUrl: string | null;
 };
 
 export function WorkoutForm({
@@ -56,15 +73,43 @@ export function WorkoutForm({
   const [exercises, setExercises] = useState<ExerciseFormData[]>(workout?.exercises ?? []);
   const [saving, setSaving] = useState(false);
 
-  const [newExercise, setNewExercise] = useState({
-    name: "",
-    type: "WEIGHTED",
-    sets: "3",
-    repRange: "10-12",
-    restTime: "",
-    notes: "",
-    mediaUrl: "",
-  });
+  // Add-exercise controls
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<LibraryExercise[]>([]);
+  const [picked, setPicked] = useState<LibraryExercise | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [newLib, setNewLib] = useState({ name: "", type: "WEIGHTED", muscleGroup: "", equipment: "" });
+  const [sets, setSets] = useState("3");
+  const [repRange, setRepRange] = useState("10-12");
+  const [restTime, setRestTime] = useState("");
+  const [notes, setNotes] = useState("");
+
+  async function handleSearch(q: string) {
+    setQuery(q);
+    setPicked(null);
+    const res = await searchExerciseLibrary(q);
+    setResults(res.map((e) => ({
+      id: e.id,
+      name: e.name,
+      type: e.type as ExerciseType,
+      muscleGroup: e.muscleGroup,
+      equipment: e.equipment,
+      videoUrl: e.videoUrl,
+    })));
+  }
+
+  async function handleCreateAndUse() {
+    if (!newLib.name) return;
+    const created = await createExerciseLibrary({
+      name: newLib.name,
+      type: newLib.type as ExerciseType,
+      muscleGroup: newLib.muscleGroup || null,
+      equipment: newLib.equipment || null,
+    });
+    setPicked({ id: created.id, name: created.name, type: created.type as ExerciseType, muscleGroup: created.muscleGroup, equipment: created.equipment, videoUrl: created.videoUrl });
+    setCreating(false);
+    setNewLib({ name: "", type: "WEIGHTED", muscleGroup: "", equipment: "" });
+  }
 
   async function handleSaveWorkout() {
     setSaving(true);
@@ -76,13 +121,11 @@ export function WorkoutForm({
       for (const ex of exercises) {
         await createExercise({
           workoutId: created.id,
-          name: ex.name,
-          type: ex.type,
+          exerciseId: ex.exerciseId,
           sets: ex.sets,
           repRange: ex.repRange,
           restTime: ex.restTime,
           notes: ex.notes,
-          mediaUrl: ex.mediaUrl,
         });
       }
       router.push(`/program/${programId}`);
@@ -91,29 +134,35 @@ export function WorkoutForm({
   }
 
   async function handleAddExercise() {
-    if (!newExercise.name) return;
-    const exerciseData = {
-      name: newExercise.name,
-      type: newExercise.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED",
-      sets: parseInt(newExercise.sets, 10) || 3,
-      repRange: newExercise.repRange,
-      restTime: newExercise.restTime ? parseInt(newExercise.restTime, 10) : null,
-      notes: newExercise.notes || null,
-      mediaUrl: newExercise.mediaUrl || null,
+    if (!picked) return;
+    const data = {
+      exerciseId: picked.id,
+      name: picked.name,
+      type: picked.type,
+      sets: parseInt(sets, 10) || 3,
+      repRange,
+      restTime: restTime ? parseInt(restTime, 10) : null,
+      notes: notes || null,
     };
     if (isEdit && workout) {
-      await createExercise({ workoutId: workout.id, ...exerciseData });
+      await createExercise({ workoutId: workout.id, ...data });
       router.refresh();
     } else {
-      setExercises((prev) => [
-        ...prev,
-        {
-          id: `temp-${Date.now()}`,
-          ...exerciseData,
-        },
-      ]);
+      setExercises((prev) => [...prev, { id: `temp-${Date.now()}`, ...data }]);
     }
-    setNewExercise({ name: "", type: "WEIGHTED", sets: "3", repRange: "10-12", restTime: "", notes: "", mediaUrl: "" });
+    resetAddForm();
+  }
+
+  function resetAddForm() {
+    setPicked(null);
+    setQuery("");
+    setResults([]);
+    setSets("3");
+    setRepRange("10-12");
+    setRestTime("");
+    setNotes("");
+    setCreating(false);
+    setNewLib({ name: "", type: "WEIGHTED", muscleGroup: "", equipment: "" });
   }
 
   async function handleDeleteWorkout() {
@@ -184,8 +233,9 @@ export function WorkoutForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Exercises</CardTitle>
+          <CardDescription>Pick from your exercise library or create a new one.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {exercises.length > 0 && (
             <div className="space-y-2">
               {exercises.map((ex) => (
@@ -202,16 +252,6 @@ export function WorkoutForm({
                       {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
                     </p>
                     {ex.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{ex.notes}</p>}
-                    {ex.mediaUrl && (
-                      <a
-                        href={ex.mediaUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-0.5 inline-block text-xs text-primary underline-offset-2 hover:underline"
-                      >
-                        reference
-                      </a>
-                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -233,60 +273,125 @@ export function WorkoutForm({
             </div>
           )}
 
-          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_7rem_5rem_5rem_5rem_auto] sm:items-end">
-            <div className="space-y-1.5">
-              <Label htmlFor="ex-name">Exercise</Label>
-              <Input id="ex-name" value={newExercise.name} onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })} placeholder="Push-ups" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              <Select value={newExercise.type} onValueChange={(v) => setNewExercise({ ...newExercise, type: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WEIGHTED">Weighted</SelectItem>
-                  <SelectItem value="BODYWEIGHT">Bodyweight</SelectItem>
-                  <SelectItem value="TIMED">Timed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ex-sets">Sets</Label>
-              <Input id="ex-sets" inputMode="numeric" value={newExercise.sets} onChange={(e) => setNewExercise({ ...newExercise, sets: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ex-reps">{newExercise.type === "TIMED" ? "Time" : "Reps"}</Label>
-              <Input id="ex-reps" value={newExercise.repRange} onChange={(e) => setNewExercise({ ...newExercise, repRange: e.target.value })} placeholder={newExercise.type === "TIMED" ? "30-60s" : "10-12"} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ex-rest">Rest (s)</Label>
-              <Input id="ex-rest" inputMode="numeric" value={newExercise.restTime} onChange={(e) => setNewExercise({ ...newExercise, restTime: e.target.value })} placeholder="90" />
-            </div>
-            <Button onClick={handleAddExercise} disabled={!newExercise.name}>
-              Add
-            </Button>
-          </div>
+          <div className="space-y-3 rounded-md border p-3">
+            {!picked && !creating ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lib-search">Search exercise library</Label>
+                  <Input
+                    id="lib-search"
+                    value={query}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="e.g. Push-ups, Squats, Plank…"
+                  />
+                </div>
+                {results.length > 0 && (
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    {results.map((e) => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        onClick={() => setPicked(e)}
+                        className="flex items-center justify-between rounded-md border px-3 py-2 text-left text-sm hover:bg-accent"
+                      >
+                        <span className="font-medium">{e.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {e.type === "BODYWEIGHT" ? "bodyweight" : e.type === "TIMED" ? "timed" : "weighted"}
+                          {e.muscleGroup ? ` · ${e.muscleGroup}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+                  + Create new exercise
+                </Button>
+              </>
+            ) : creating ? (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Create exercise</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lib-name">Name</Label>
+                    <Input id="lib-name" value={newLib.name} onChange={(e) => setNewLib({ ...newLib, name: e.target.value })} placeholder="Push-ups" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Type</Label>
+                    <Select value={newLib.type} onValueChange={(v) => setNewLib({ ...newLib, type: v })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="WEIGHTED">Weighted</SelectItem>
+                        <SelectItem value="BODYWEIGHT">Bodyweight</SelectItem>
+                        <SelectItem value="TIMED">Timed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lib-muscle">Muscle group</Label>
+                    <Input id="lib-muscle" value={newLib.muscleGroup} onChange={(e) => setNewLib({ ...newLib, muscleGroup: e.target.value })} placeholder="Chest" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lib-equip">Equipment</Label>
+                    <Input id="lib-equip" value={newLib.equipment} onChange={(e) => setNewLib({ ...newLib, equipment: e.target.value })} placeholder="None / Backpack / Dumbbells" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleCreateAndUse} disabled={!newLib.name}>
+                    Create & use
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setCreating(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{picked!.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {picked!.type === "BODYWEIGHT" ? "bodyweight" : picked!.type === "TIMED" ? "timed" : "weighted"}
+                    {picked!.muscleGroup ? ` · ${picked!.muscleGroup}` : ""}
+                    {picked!.equipment ? ` · ${picked!.equipment}` : ""}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={resetAddForm}>
+                  Change
+                </Button>
+              </div>
+            )}
 
-          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ex-notes">Cue / notes (optional)</Label>
-              <Input
-                id="ex-notes"
-                value={newExercise.notes}
-                onChange={(e) => setNewExercise({ ...newExercise, notes: e.target.value })}
-                placeholder="Keep elbows tucked"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ex-media">Reference media URL (optional)</Label>
-              <Input
-                id="ex-media"
-                type="url"
-                value={newExercise.mediaUrl}
-                onChange={(e) => setNewExercise({ ...newExercise, mediaUrl: e.target.value })}
-                placeholder="https://youtube.com/…"
-              />
+            {picked && (
+              <div className="grid gap-3 border-t pt-3 sm:grid-cols-[5rem_1fr_5rem_auto] sm:items-end">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ex-sets">Sets</Label>
+                  <Input id="ex-sets" inputMode="numeric" value={sets} onChange={(e) => setSets(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ex-reps">{picked.type === "TIMED" ? "Time target" : "Rep target"}</Label>
+                  <Input id="ex-reps" value={repRange} onChange={(e) => setRepRange(e.target.value)} placeholder={picked.type === "TIMED" ? "30-60s" : "10-12"} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ex-rest">Rest (s)</Label>
+                  <Input id="ex-rest" inputMode="numeric" value={restTime} onChange={(e) => setRestTime(e.target.value)} placeholder="90" />
+                </div>
+                <Button onClick={handleAddExercise} disabled={!picked}>
+                  Add
+                </Button>
+              </div>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-1">
+              <div className="space-y-1.5">
+                <Label htmlFor="ex-notes">Cue / notes (optional)</Label>
+                <Input
+                  id="ex-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Keep elbows tucked"
+                />
+              </div>
             </div>
           </div>
         </CardContent>

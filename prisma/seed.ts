@@ -130,23 +130,33 @@ async function main() {
   }
 
   const existingProgram = await prisma.program.findFirst({ where: { name: "8-Week Transformation" } });
+
+  // Ensure every exercise from the program exists in the library.
+  const libraryByLowerName = new Map<string, { id: string }>();
+  for (const w of programWorkouts) {
+    for (const e of w.exercises) {
+      const key = e.name.toLowerCase();
+      const existing = libraryByLowerName.get(key) ?? (await prisma.exerciseLibrary.findUnique({ where: { name: e.name } }));
+      if (!existing) {
+        const created = await prisma.exerciseLibrary.create({
+          data: {
+            name: e.name,
+            type: e.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED",
+            videoUrl: (e as { videoUrl?: string }).videoUrl ?? null,
+          },
+        });
+        libraryByLowerName.set(key, { id: created.id });
+      } else {
+        libraryByLowerName.set(key, existing);
+      }
+    }
+  }
+  console.log("  exercise library:", libraryByLowerName.size);
+
   let program;
   if (existingProgram) {
     program = existingProgram;
-    // Refresh exercise types on existing workouts (idempotent).
-    for (const w of programWorkouts) {
-      const workout = await prisma.workout.findUnique({
-        where: { programId_dayOfWeek: { programId: program.id, dayOfWeek: w.dayOfWeek } },
-      });
-      if (!workout) continue;
-      for (const e of w.exercises) {
-        await prisma.exercise.updateMany({
-          where: { workoutId: workout.id, name: e.name },
-          data: { type: e.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED" },
-        });
-      }
-    }
-    console.log("  program: refreshed exercise types");
+    console.log("  program: existing, library links preserved");
   } else {
     program = await prisma.program.create({
       data: {
@@ -160,7 +170,13 @@ async function main() {
             dayOfWeek: w.dayOfWeek,
             sortOrder: w.sortOrder,
             exercises: {
-              create: w.exercises.map((e, i) => ({ ...e, type: e.type as "WEIGHTED" | "BODYWEIGHT" | "TIMED", sortOrder: i })),
+              create: w.exercises.map((e, i) => ({
+                exerciseId: libraryByLowerName.get(e.name.toLowerCase())!.id,
+                sets: e.sets,
+                repRange: e.repRange,
+                restTime: e.restTime,
+                sortOrder: i,
+              })),
             },
           })),
         },

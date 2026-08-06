@@ -12,7 +12,7 @@ type TodaySchedule = {
   session: { duration: number | null } | null;
   workout: {
     name: string;
-    exercises: { name: string; sets: number; repRange: string }[];
+    exercises: { exercise: { name: string }; sets: number; repRange: string }[];
   };
 } | null;
 
@@ -66,8 +66,8 @@ export function WorkoutCard({
               <p className="font-medium">{schedule.workout.name}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {schedule.workout.exercises.map((ex) => (
-                  <Badge key={ex.name} variant="secondary">
-                    {ex.name} {ex.sets}×{ex.repRange}
+                  <Badge key={ex.exercise.name} variant="secondary">
+                    {ex.exercise.name} {ex.sets}×{ex.repRange}
                   </Badge>
                 ))}
               </div>

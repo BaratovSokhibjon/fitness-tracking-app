@@ -65,7 +65,9 @@ export type PersonalRecord = {
 export async function getPersonalRecords() {
   const logs = await prisma.exerciseLog.findMany({
     include: {
-      exercise: { select: { id: true, name: true, type: true } },
+      exercise: {
+        include: { exercise: { select: { id: true, name: true, type: true } } },
+      },
       session: { select: { date: true } },
     },
   });
@@ -88,8 +90,8 @@ export async function getPersonalRecords() {
     let rec = byExercise.get(key);
     if (!rec) {
       rec = {
-        name: log.exercise.name,
-        type: log.exercise.type,
+        name: log.exercise.exercise.name,
+        type: log.exercise.exercise.type,
         maxWeight: null,
         maxReps: null,
         maxDurationSec: null,
@@ -99,7 +101,7 @@ export async function getPersonalRecords() {
       byExercise.set(key, rec);
     }
 
-    if (log.exercise.type === "TIMED") {
+    if (log.exercise.exercise.type === "TIMED") {
       if (log.durationSec != null && log.durationSec > 0 && (rec.maxDurationSec == null || log.durationSec > rec.maxDurationSec)) {
         rec.maxDurationSec = log.durationSec;
         rec.date = log.session.date;

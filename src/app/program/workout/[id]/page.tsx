@@ -28,13 +28,13 @@ export default async function EditWorkoutPage({ params }: { params: Promise<{ id
           programId: workout.programId,
           exercises: workout.exercises.map((e) => ({
             id: e.id,
-            name: e.name,
+            exerciseId: e.exerciseId,
+            name: e.exercise.name,
             sets: e.sets,
             repRange: e.repRange,
-            type: e.type,
+            type: e.exercise.type,
             restTime: e.restTime,
             notes: e.notes,
-            mediaUrl: e.mediaUrl,
           })),
         }}
       />

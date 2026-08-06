@@ -50,29 +50,52 @@ model Workout {
   updatedAt DateTime @updatedAt
 
   program   Program     @relation(fields: [programId], references: [id], onDelete: Cascade)
-  exercises Exercise[]
+  exercises WorkoutExercise[]
   schedules WorkoutSchedule[]
   sessions  WorkoutSession[]
 
   @@unique([programId, dayOfWeek])
 }
 
-model Exercise {
-  id        String        @id @default(cuid())
-  workoutId String
-  name      String
-  type      ExerciseType  @default(WEIGHTED)
-  sets      Int
-  repRange  String
-  restTime  Int?
-  notes     String?       @db.Text
-  mediaUrl  String?
-  sortOrder Int           @default(0)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+// ─── Exercise Library ───────────────────────────────────
 
-  workout      Workout       @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+model ExerciseLibrary {
+  id           String       @id @default(cuid())
+  name         String
+  type         ExerciseType @default(WEIGHTED)
+  muscleGroup  String?
+  equipment    String?
+  difficulty   String?
+  instructions String?      @db.Text
+  videoUrl     String?
+  imageUrl     String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workoutExercises WorkoutExercise[]
+
+  @@unique([name])
+}
+
+model WorkoutExercise {
+  id         String  @id @default(cuid())
+  workoutId  String
+  exerciseId String
+  sets       Int
+  repRange   String
+  restTime   Int?
+  notes      String? @db.Text
+  sortOrder  Int     @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  workout      Workout        @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise     ExerciseLibrary @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   exerciseLogs ExerciseLog[]
+
+  @@index([workoutId])
+  @@index([exerciseId])
 }
 
 enum ExerciseType {
@@ -135,8 +158,8 @@ model ExerciseLog {
   notes      String? @db.Text
   createdAt  DateTime @default(now())
 
-  session  WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  exercise Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  session  WorkoutSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise WorkoutExercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
 
   @@unique([sessionId, exerciseId, setNumber])
 }

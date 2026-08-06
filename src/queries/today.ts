@@ -17,7 +17,9 @@ export async function getTodayData() {
       prisma.workoutSchedule.findUnique({
         where: { date: today },
         include: {
-          workout: { include: { exercises: { orderBy: { sortOrder: "asc" } } } },
+          workout: {
+            include: { exercises: { include: { exercise: true }, orderBy: { sortOrder: "asc" } } },
+          },
           session: true,
         },
       }),

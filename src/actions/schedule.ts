@@ -94,7 +94,7 @@ export async function generateScheduleIfMissing(programId: string) {
 export async function getScheduleForDate(date: Date) {
   return prisma.workoutSchedule.findUnique({
     where: { date: startOfDay(date) },
-    include: { workout: { include: { exercises: true } } },
+    include: { workout: { include: { exercises: { include: { exercise: true } } } } },
   });
 }
 

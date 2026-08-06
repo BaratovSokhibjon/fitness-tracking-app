@@ -174,11 +174,18 @@ export async function getSessionByScheduleId(scheduleId: string) {
   const schedule = await prisma.workoutSchedule.findUnique({
     where: { id: scheduleId },
     include: {
-      workout: { include: { exercises: { orderBy: { sortOrder: "asc" } } } },
+      workout: {
+        include: {
+          exercises: {
+            include: { exercise: true },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+      },
       session: {
         include: {
           exerciseLogs: {
-            include: { exercise: true },
+            include: { exercise: { include: { exercise: true } } },
             orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
           },
         },

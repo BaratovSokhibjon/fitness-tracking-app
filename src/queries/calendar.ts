@@ -10,7 +10,7 @@ export async function getCalendarData(date: Date) {
   const schedules = await prisma.workoutSchedule.findMany({
     where: { date: { gte: start, lte: end } },
     include: {
-      workout: { include: { exercises: true } },
+      workout: { include: { exercises: { include: { exercise: true } } } },
       session: true,
     },
     orderBy: { date: "asc" },
@@ -31,7 +31,7 @@ export async function getProgram(programId: string) {
     where: { id: programId },
     include: {
       workouts: {
-        include: { exercises: { orderBy: { sortOrder: "asc" } } },
+        include: { exercises: { include: { exercise: true }, orderBy: { sortOrder: "asc" } } },
         orderBy: { dayOfWeek: "asc" },
       },
     },
@@ -42,7 +42,7 @@ export async function getWorkout(workoutId: string) {
   return prisma.workout.findUnique({
     where: { id: workoutId },
     include: {
-      exercises: { orderBy: { sortOrder: "asc" } },
+      exercises: { include: { exercise: true }, orderBy: { sortOrder: "asc" } },
       program: true,
     },
   });

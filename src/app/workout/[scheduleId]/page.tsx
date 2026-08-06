@@ -30,13 +30,13 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
         date={schedule.date.toISOString()}
         exercises={schedule.workout.exercises.map((e) => ({
           id: e.id,
-          name: e.name,
-          type: e.type,
+          name: e.exercise.name,
+          type: e.exercise.type,
           sets: e.sets,
           repRange: e.repRange,
           restTime: e.restTime,
           notes: e.notes,
-          mediaUrl: e.mediaUrl,
+          mediaUrl: e.exercise.videoUrl,
         }))}
         historyByExercise={Object.fromEntries(
           historyByExercise.entries()

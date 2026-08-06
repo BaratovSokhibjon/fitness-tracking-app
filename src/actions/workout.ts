@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exerciseSchema, workoutSchema, type ExerciseInput, type WorkoutInput } from "@/schemas/program";
+import {
+  exerciseLibrarySchema,
+  exerciseSchema,
+  workoutSchema,
+  type ExerciseInput,
+  type ExerciseLibraryInput,
+  type WorkoutInput,
+} from "@/schemas/program";
 
 export async function createWorkout(input: WorkoutInput) {
   const data = workoutSchema.parse(input);
@@ -27,9 +34,57 @@ export async function deleteWorkout(id: string) {
   return { ok: true };
 }
 
+// ─── Exercise Library ───────────────────────────────────
+
+export async function createExerciseLibrary(input: ExerciseLibraryInput) {
+  const data = exerciseLibrarySchema.parse(input);
+  const exercise = await prisma.exerciseLibrary.create({ data });
+  revalidatePath("/program");
+  revalidatePath("/");
+  return exercise;
+}
+
+export async function updateExerciseLibrary(id: string, input: ExerciseLibraryInput) {
+  const data = exerciseLibrarySchema.parse(input);
+  const exercise = await prisma.exerciseLibrary.update({ where: { id }, data });
+  revalidatePath("/program");
+  revalidatePath("/");
+  return exercise;
+}
+
+export async function deleteExerciseLibrary(id: string) {
+  const inUse = await prisma.workoutExercise.count({ where: { exerciseId: id } });
+  if (inUse > 0) throw new Error("This exercise is used by a workout and cannot be deleted.");
+  await prisma.exerciseLibrary.delete({ where: { id } });
+  revalidatePath("/program");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function getExerciseLibrary() {
+  return prisma.exerciseLibrary.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function searchExerciseLibrary(query: string) {
+  if (!query.trim()) return getExerciseLibrary();
+  return prisma.exerciseLibrary.findMany({
+    where: {
+      isActive: true,
+      name: { contains: query.trim() },
+    },
+    orderBy: { name: "asc" },
+    take: 20,
+  });
+}
+
+// ─── Workout Exercises (template rows) ──────────────────
+
 export async function createExercise(input: ExerciseInput) {
   const data = exerciseSchema.parse(input);
-  const exercise = await prisma.exercise.create({ data });
+  const exercise = await prisma.workoutExercise.create({ data });
   revalidatePath("/program");
   revalidatePath("/");
   return exercise;
@@ -37,14 +92,16 @@ export async function createExercise(input: ExerciseInput) {
 
 export async function updateExercise(id: string, input: ExerciseInput) {
   const data = exerciseSchema.parse(input);
-  const exercise = await prisma.exercise.update({ where: { id }, data });
+  const exercise = await prisma.workoutExercise.update({ where: { id }, data });
   revalidatePath("/program");
   revalidatePath("/");
   return exercise;
 }
 
 export async function deleteExercise(id: string) {
-  await prisma.exercise.delete({ where: { id } });
+  const inUse = await prisma.exerciseLog.count({ where: { exerciseId: id } });
+  if (inUse > 0) throw new Error("This exercise has logged history and cannot be deleted.");
+  await prisma.workoutExercise.delete({ where: { id } });
   revalidatePath("/program");
   revalidatePath("/");
   return { ok: true };
