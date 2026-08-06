@@ -12,6 +12,7 @@ import {
   Settings,
   Target,
   TrendingUp,
+  Utensils,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/program", label: "Program", icon: Dumbbell },
   { href: "/progress", label: "Progress", icon: TrendingUp },
+  { href: "/foods", label: "Foods", icon: Utensils },
   { href: "/review", label: "Review", icon: Activity },
   { href: "/goals", label: "Goals", icon: Goal },
 ];

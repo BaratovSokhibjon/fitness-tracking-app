@@ -55,6 +55,7 @@ The user opens the app and lands on **Today** — one page with workout, quick c
 - Profile (targets & baselines)
 
 ### Phase 2
+- Food database & meal logging (create food items, log meals, auto-calculate macros)
 - Body measurements tracking
 - Progress photo uploads
 - Weekly review (auto-summary)

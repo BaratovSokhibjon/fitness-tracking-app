@@ -20,6 +20,7 @@ All data mutations use **Next.js Server Actions**. No REST API endpoints except:
 | `actions/habits.ts` | `createHabit`, `toggleHabit`, `getHabitsForDate` |
 | `actions/goals.ts` | `createGoal`, `updateGoal`, `updateGoalProgress`, `deleteGoal` |
 | `actions/review.ts` | `getWeeklyReview`, `saveReviewNotes` |
+| `actions/foods.ts` | `createFood`, `updateFood`, `deleteFood`, `getFoods`, `searchFoods`, `addFoodToLog`, `removeFoodFromLog` (Phase 2) |
 
 ---
 
@@ -236,6 +237,35 @@ export const goalProgressSchema = z.object({
 });
 
 export type GoalInput = z.infer<typeof goalSchema>;
+```
+
+### Food Schema (Phase 2)
+
+```typescript
+// src/schemas/food.ts
+import { z } from "zod";
+
+export const foodItemSchema = z.object({
+  name: z.string().min(1).max(100),
+  servingSize: z.number().min(0),
+  servingUnit: z.string().min(1).max(20),
+  caloriesPerServing: z.number().int().min(0).max(5000),
+  proteinPerServing: z.number().min(0).max(500),
+  carbsPerServing: z.number().min(0).max(500),
+  fatPerServing: z.number().min(0).max(500),
+  category: z.enum(["PROTEIN", "CARBS", "FATS", "MEAL", "SNACK", "DRINK", "OTHER"]),
+  imageUrl: z.string().nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const foodLogEntrySchema = z.object({
+  checkInId: z.string().cuid(),
+  foodItemId: z.string().cuid(),
+  quantity: z.number().min(0.1).max(100),
+});
+
+export type FoodItemInput = z.infer<typeof foodItemSchema>;
+export type FoodLogEntryInput = z.infer<typeof foodLogEntrySchema>;
 ```
 
 ---

@@ -1,0 +1,134 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { startOfDay } from "date-fns";
+import { prisma } from "@/lib/prisma";
+import { foodItemSchema, foodLogEntrySchema, type FoodItemInput, type FoodLogEntryInput } from "@/schemas/food";
+
+async function recomputeCheckInTotals(checkInId: string) {
+  const entries = await prisma.foodLogEntry.findMany({ where: { checkInId } });
+
+  const totals = entries.reduce(
+    (acc, e) => ({
+      calories: acc.calories + e.calories,
+      protein: acc.protein + e.protein,
+      carbs: acc.carbs + e.carbs,
+      fat: acc.fat + e.fat,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  await prisma.dailyCheckIn.update({
+    where: { id: checkInId },
+    data: {
+      calories: Math.round(totals.calories),
+      protein: Math.round(totals.protein),
+      carbs: Math.round(totals.carbs),
+      fat: Math.round(totals.fat),
+    },
+  });
+}
+
+export async function createFood(input: FoodItemInput) {
+  const data = foodItemSchema.parse(input);
+  const food = await prisma.foodItem.create({ data });
+  revalidatePath("/foods");
+  return food;
+}
+
+export async function updateFood(id: string, input: FoodItemInput) {
+  const data = foodItemSchema.parse(input);
+  const food = await prisma.foodItem.update({ where: { id }, data });
+  revalidatePath("/foods");
+  return food;
+}
+
+export async function deleteFood(id: string) {
+  await prisma.foodItem.delete({ where: { id } });
+  revalidatePath("/foods");
+  return { ok: true };
+}
+
+export async function getFoods() {
+  return prisma.foodItem.findMany({
+    where: { isActive: true },
+    orderBy: [{ category: "asc" }, { name: "asc" }],
+  });
+}
+
+export async function searchFoods(query: string) {
+  if (!query.trim()) return getFoods();
+  return prisma.foodItem.findMany({
+    where: {
+      isActive: true,
+      name: { contains: query.trim() },
+    },
+    orderBy: { name: "asc" },
+    take: 20,
+  });
+}
+
+export async function addFoodToLog(input: FoodLogEntryInput) {
+  const { date: dateStr, foodItemId, quantity } = foodLogEntrySchema.parse(input);
+  const date = startOfDay(new Date(dateStr));
+
+  const food = await prisma.foodItem.findUnique({ where: { id: foodItemId } });
+  if (!food) throw new Error("Food not found");
+
+  const checkIn = await prisma.dailyCheckIn.upsert({
+    where: { date },
+    update: {},
+    create: { date },
+  });
+
+  const entry = await prisma.foodLogEntry.create({
+    data: {
+      checkInId: checkIn.id,
+      foodItemId,
+      quantity,
+      calories: Math.round(food.caloriesPerServing * quantity),
+      protein: food.proteinPerServing * quantity,
+      carbs: food.carbsPerServing * quantity,
+      fat: food.fatPerServing * quantity,
+    },
+    include: { foodItem: true },
+  });
+
+  await recomputeCheckInTotals(checkIn.id);
+
+  revalidatePath("/");
+  revalidatePath("/history");
+  revalidatePath("/review");
+  return entry;
+}
+
+export async function removeFoodFromLog(entryId: string) {
+  const entry = await prisma.foodLogEntry.findUnique({ where: { id: entryId } });
+  if (!entry) return { ok: false };
+
+  await prisma.foodLogEntry.delete({ where: { id: entryId } });
+  await recomputeCheckInTotals(entry.checkInId);
+
+  revalidatePath("/");
+  revalidatePath("/history");
+  revalidatePath("/review");
+  return { ok: true };
+}
+
+export async function getFoodLogForDate(date: string) {
+  const day = startOfDay(new Date(date));
+  const checkIn = await prisma.dailyCheckIn.findUnique({
+    where: { date: day },
+    include: {
+      foodLog: {
+        include: { foodItem: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  return {
+    checkInId: checkIn?.id ?? null,
+    entries: checkIn?.foodLog ?? [],
+  };
+}

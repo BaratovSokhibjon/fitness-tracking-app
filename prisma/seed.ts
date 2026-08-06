@@ -18,6 +18,19 @@ const defaultGoals = [
   { name: "Daily Steps", targetValue: 10000, currentValue: 0, unit: "steps", type: "STEPS" as const },
 ];
 
+const seedFoods = [
+  { name: "White Bread", servingSize: 100, servingUnit: "g", caloriesPerServing: 265, proteinPerServing: 9, carbsPerServing: 49, fatPerServing: 3.2, category: "CARBS" as const },
+  { name: "Eggs (whole)", servingSize: 1, servingUnit: "egg", caloriesPerServing: 70, proteinPerServing: 6, carbsPerServing: 0.6, fatPerServing: 5, category: "PROTEIN" as const },
+  { name: "Chicken Breast", servingSize: 100, servingUnit: "g", caloriesPerServing: 165, proteinPerServing: 31, carbsPerServing: 0, fatPerServing: 3.6, category: "PROTEIN" as const },
+  { name: "White Rice (cooked)", servingSize: 100, servingUnit: "g", caloriesPerServing: 130, proteinPerServing: 2.7, carbsPerServing: 28, fatPerServing: 0.3, category: "CARBS" as const },
+  { name: "Banana", servingSize: 1, servingUnit: "medium", caloriesPerServing: 105, proteinPerServing: 1.3, carbsPerServing: 27, fatPerServing: 0.4, category: "SNACK" as const },
+  { name: "Olive Oil", servingSize: 15, servingUnit: "ml", caloriesPerServing: 119, proteinPerServing: 0, carbsPerServing: 0, fatPerServing: 13.5, category: "FATS" as const },
+  { name: "Greek Yogurt", servingSize: 100, servingUnit: "g", caloriesPerServing: 59, proteinPerServing: 10, carbsPerServing: 3.6, fatPerServing: 0.7, category: "PROTEIN" as const },
+  { name: "Oats", servingSize: 100, servingUnit: "g", caloriesPerServing: 389, proteinPerServing: 17, carbsPerServing: 66, fatPerServing: 7, category: "CARBS" as const },
+  { name: "Whey Protein", servingSize: 30, servingUnit: "g", caloriesPerServing: 120, proteinPerServing: 24, carbsPerServing: 3, fatPerServing: 1.5, category: "PROTEIN" as const },
+  { name: "Peanut Butter", servingSize: 32, servingUnit: "g", caloriesPerServing: 190, proteinPerServing: 8, carbsPerServing: 6, fatPerServing: 16, category: "FATS" as const },
+];
+
 const programWorkouts = [
   {
     name: "Push",
@@ -95,6 +108,16 @@ async function main() {
     });
   }
   console.log("  habits:", defaultHabits.length);
+
+  const foodCount = await prisma.foodItem.count();
+  if (foodCount === 0) {
+    for (const f of seedFoods) {
+      await prisma.foodItem.create({ data: f });
+    }
+    console.log("  foods:", seedFoods.length);
+  } else {
+    console.log("  foods: skipped (already present)");
+  }
 
   const goalCount = await prisma.goal.count();
   if (goalCount === 0) {

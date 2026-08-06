@@ -19,6 +19,10 @@ WorkoutSession ──N:1── Workout (template reference)
 ExerciseLog ──N:1── Exercise (template reference)
 
 Habit ──1:N── HabitLog
+
+// Phase 2
+DailyCheckIn ──1:N── FoodLogEntry
+FoodLogEntry ──N:1── FoodItem
 ```
 
 ## Prisma Schema
@@ -264,6 +268,53 @@ enum GoalType {
   STEPS
   OTHER
 }
+
+// ─── Food Database (Phase 2) ─────────────────────────────
+
+model FoodItem {
+  id                 String   @id @default(cuid())
+  name               String              // "Chicken Breast", "Eggs", "White Bread"
+  servingSize        Float               // 100, 1, 30
+  servingUnit        String              // "g", "egg", "slice", "ml"
+  caloriesPerServing Int
+  proteinPerServing  Float               // grams
+  carbsPerServing    Float               // grams
+  fatPerServing      Float               // grams
+  category           FoodCategory
+  imageUrl           String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  logEntries FoodLogEntry[]
+
+  @@unique([name])
+}
+
+enum FoodCategory {
+  PROTEIN
+  CARBS
+  FATS
+  MEAL
+  SNACK
+  DRINK
+  OTHER
+}
+
+model FoodLogEntry {
+  id         String   @id @default(cuid())
+  checkInId  String
+  foodItemId String
+  quantity   Float                // multiplier: 2.0 = 2x, 1.5 = 150g of 100g serving
+  calories   Int                  // denormalized: quantity × foodItem.caloriesPerServing
+  protein    Float                // denormalized
+  carbs      Float                // denormalized
+  fat        Float                // denormalized
+  createdAt  DateTime @default(now())
+
+  checkIn  DailyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  foodItem FoodItem     @relation(fields: [foodItemId], references: [id], onDelete: Restrict)
+}
 ```
 
 ## Table Summary
@@ -283,6 +334,8 @@ enum GoalType {
 | `BodyMeasurement` | Periodic measurements | unique(date) |
 | `ProgressPhoto` | Uploaded photos | — |
 | `Goal` | Goal tracking | — |
+| `FoodItem` | Food database item (Phase 2) | unique(name) |
+| `FoodLogEntry` | Food item logged for a day (Phase 2) | — |
 
 ## Seed Data
 
@@ -347,5 +400,19 @@ const programWorkouts = [
       { name: "Plank", sets: 3, repRange: "30-60s", restTime: 45 },
     ],
   },
+];
+
+// Phase 2 seed data
+const seedFoods = [
+  { name: "White Bread", servingSize: 100, servingUnit: "g", caloriesPerServing: 265, proteinPerServing: 9, carbsPerServing: 49, fatPerServing: 3.2, category: "CARBS" },
+  { name: "Eggs (whole)", servingSize: 1, servingUnit: "egg", caloriesPerServing: 70, proteinPerServing: 6, carbsPerServing: 0.6, fatPerServing: 5, category: "PROTEIN" },
+  { name: "Chicken Breast", servingSize: 100, servingUnit: "g", caloriesPerServing: 165, proteinPerServing: 31, carbsPerServing: 0, fatPerServing: 3.6, category: "PROTEIN" },
+  { name: "White Rice (cooked)", servingSize: 100, servingUnit: "g", caloriesPerServing: 130, proteinPerServing: 2.7, carbsPerServing: 28, fatPerServing: 0.3, category: "CARBS" },
+  { name: "Banana", servingSize: 1, servingUnit: "medium", caloriesPerServing: 105, proteinPerServing: 1.3, carbsPerServing: 27, fatPerServing: 0.4, category: "SNACK" },
+  { name: "Olive Oil", servingSize: 15, servingUnit: "ml", caloriesPerServing: 119, proteinPerServing: 0, carbsPerServing: 0, fatPerServing: 13.5, category: "FATS" },
+  { name: "Greek Yogurt", servingSize: 100, servingUnit: "g", caloriesPerServing: 59, proteinPerServing: 10, carbsPerServing: 3.6, fatPerServing: 0.7, category: "PROTEIN" },
+  { name: "Oats", servingSize: 100, servingUnit: "g", caloriesPerServing: 389, proteinPerServing: 17, carbsPerServing: 66, fatPerServing: 7, category: "CARBS" },
+  { name: "Whey Protein", servingSize: 30, servingUnit: "g", caloriesPerServing: 120, proteinPerServing: 24, carbsPerServing: 3, fatPerServing: 1.5, category: "PROTEIN" },
+  { name: "Peanut Butter", servingSize: 32, servingUnit: "g", caloriesPerServing: 190, proteinPerServing: 8, carbsPerServing: 6, fatPerServing: 16, category: "FATS" },
 ];
 ```

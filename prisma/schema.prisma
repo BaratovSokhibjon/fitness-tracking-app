@@ -150,7 +150,56 @@ model DailyCheckIn {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  foodLog FoodLogEntry[]
+
   @@unique([date])
+}
+
+// ─── Food Database & Meal Log (Phase 2) ─────────────────
+
+model FoodItem {
+  id                 String       @id @default(cuid())
+  name               String
+  servingSize        Float
+  servingUnit        String
+  caloriesPerServing Int
+  proteinPerServing  Float
+  carbsPerServing    Float
+  fatPerServing      Float
+  category           FoodCategory
+  imageUrl           String?
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  logEntries FoodLogEntry[]
+
+  @@unique([name])
+}
+
+enum FoodCategory {
+  PROTEIN
+  CARBS
+  FATS
+  MEAL
+  SNACK
+  DRINK
+  OTHER
+}
+
+model FoodLogEntry {
+  id         String   @id @default(cuid())
+  checkInId  String
+  foodItemId String
+  quantity   Float
+  calories   Int
+  protein    Float
+  carbs      Float
+  fat        Float
+  createdAt  DateTime @default(now())
+
+  checkIn  DailyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  foodItem FoodItem     @relation(fields: [foodItemId], references: [id], onDelete: Restrict)
 }
 
 // ─── Habits ─────────────────────────────────────────────

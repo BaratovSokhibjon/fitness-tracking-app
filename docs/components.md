@@ -22,12 +22,14 @@ Use **ChatCM UI pre-built components only**. Do not create custom UI primitives 
 │   └── State: completed → shows ✓, duration, triggers PostWorkoutPrompt
 │
 ├── <QuickCheckIn>                   # Progressive check-in form
-│   ├── Morning weight (Input, pre-filled from yesterday)
-│   ├── Sleep hours (Input)
+│   ├── Morning weight: [kg picker] [.decimal picker]
+│   │   (pre-filled from yesterday, 40–200 kg, .0–.9 decimal)
+│   ├── Sleep hours (dropdown/slider, 3.0–15.0 in 0.5 steps)
 │   ├── Energy (Slider or ButtonGroup, 1-10)
 │   ├── Mood (Slider or ButtonGroup, 1-10)
 │   └── <ExpandableSection>          # Collapsed by default
-│       ├── <NutritionSection>       # Calories, protein, carbs, fat
+│       ├── <NutritionSection>       # Phase 1: manual input; Phase 2: food log
+│       │   └── <FoodSelector />     # Phase 2: search/browse food items
 │       └── <NotesSection>           # Textarea
 │
 ├── <HabitGrid>                      # Today's habits
@@ -96,6 +98,17 @@ Use **ChatCM UI pre-built components only**. Do not create custom UI primitives 
 <GoalsPage>
 └── <GoalList>
     └── <GoalCard>                   # Name, progress bar, edit/delete
+
+# Foods (/foods) — Phase 2
+<FoodsPage>
+├── <FoodSearch />                   # Search/filter bar
+├── <FoodList>
+│   └── <FoodCard>                   # Name, serving, macros, photo, edit/delete
+└── <FoodForm>                       # Dialog: create/edit food item
+    ├── Name, serving size, unit
+    ├── Calories, protein, carbs, fat per serving
+    ├── Category dropdown
+    └── Photo upload
 ```
 
 ## Server vs. Client Components
@@ -108,6 +121,8 @@ Use **ChatCM UI pre-built components only**. Do not create custom UI primitives 
 | `HabitGrid` / `HabitToggle` | Client | Interactive checkboxes, optimistically updates |
 | `WaterCounter` | Client | Increment button interaction |
 | `StepsCounter` | Client | Input interaction |
+| `FoodSelector` | Client | Search/browse food items (Phase 2) |
+| `FoodForm` | Client | Create/edit food item (Phase 2) |
 | `PostWorkoutPrompt` | Client | Form with save action |
 | `HistoryPage` | Server | Fetches all chart data |
 | Charts (weight, calories, etc.) | Client | Recharts requires client-side rendering |

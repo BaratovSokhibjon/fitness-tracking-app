@@ -6,6 +6,7 @@ import { HabitGrid } from "@/components/today/habit-grid";
 import { WaterCounter } from "@/components/today/water-counter";
 import { StepsCounter } from "@/components/today/steps-counter";
 import { PostWorkoutPrompt } from "@/components/today/post-workout-prompt";
+import { FoodLogSection } from "@/components/today/food-log";
 
 export default async function TodayPage() {
   const data = await getTodayData();
@@ -48,6 +49,8 @@ export default async function TodayPage() {
           notes: data.todayCheckIn?.notes ?? "",
         }}
       />
+
+      <FoodLogSection date={new Date().toISOString()} />
 
       <HabitGrid date={new Date().toISOString()} habits={data.todayHabits} />
 

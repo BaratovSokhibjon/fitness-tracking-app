@@ -51,6 +51,7 @@ Program           /program
 Progress          /progress
 Review            /review
 Goals             /goals
+Foods             /foods       (Phase 2)
 ───
 Profile           /profile
 ```
