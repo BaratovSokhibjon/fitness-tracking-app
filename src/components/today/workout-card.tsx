@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarCheck2, CheckCircle2 } from "lucide-react";
+import { CalendarCheck, CheckCircle } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,12 +31,12 @@ export function WorkoutCard({
         <CardTitle className="flex items-center gap-2">
           {completedToday ? (
             <>
-              <CheckCircle2 className="h-5 w-5 text-success-bright" />
+              <CheckCircle className="h-5 w-5 text-success-bright" />
               Today&apos;s Workout
             </>
           ) : (
             <>
-              <CalendarCheck2 className="h-5 w-5 text-primary" />
+              <CalendarCheck className="h-5 w-5 text-primary" />
               Today&apos;s Workout
             </>
           )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PartyPopper } from "lucide-react";
+import { Confetti } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,7 @@ export function PostWorkoutPrompt({
     <Card className="border-success bg-success/10">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-success">
-          <PartyPopper className="h-5 w-5" />
+          <Confetti className="h-5 w-5" />
           Workout completed {duration ? `— ${formatDuration(duration)}` : ""}
         </CardTitle>
         <CardDescription>How did it feel?</CardDescription>

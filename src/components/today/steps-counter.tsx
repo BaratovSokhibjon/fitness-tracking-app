@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Footprints } from "lucide-react";
+import { Footprints } from "@phosphor-icons/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";

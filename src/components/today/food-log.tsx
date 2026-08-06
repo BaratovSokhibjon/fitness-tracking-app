@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Utensils } from "lucide-react";
+import { ForkKnife, Plus, Trash } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,7 +63,7 @@ export function FoodSelector({ date }: { date: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Utensils className="h-4 w-4" />
+          <ForkKnife className="h-4 w-4" />
           Log Food
         </Button>
       </DialogTrigger>
@@ -81,10 +81,10 @@ export function FoodSelector({ date }: { date: string }) {
                 return (
                   <div key={food.id} className="flex items-center justify-between gap-2 rounded-none border px-3 py-2">
                     <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm font-medium">
+                      <div className="flex items-center gap-2 text-sm font-medium">
                         <span className="truncate">{food.name}</span>
                         <Badge variant="secondary">{categoryLabels[food.category]}</Badge>
-                      </p>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {food.caloriesPerServing} kcal per {food.servingSize} {food.servingUnit}
                       </p>
@@ -187,7 +187,7 @@ export function FoodLogSection({ date }: { date: string }) {
                   </p>
                 </div>
                 <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleRemove(entry.id)}>
-                  <Trash2 className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
                 </Button>
               </li>
             ))}

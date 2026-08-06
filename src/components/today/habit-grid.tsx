@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, ListChecks } from "lucide-react";
+import { CheckCircle, Circle, ListChecks } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toggleHabit } from "@/actions/habits";
@@ -46,9 +46,9 @@ export function HabitGrid({
                 )}
               >
                 {h.completed ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                  <CheckCircle className="h-4 w-4 shrink-0 text-primary" />
                 ) : (
-                  <Circle className="h-4 w-4 shrink-0" />
+                  <Circle className="h-4 w-4 shrink-0" weight="regular" />
                 )}
                 <span className="truncate">{h.name}</span>
               </button>

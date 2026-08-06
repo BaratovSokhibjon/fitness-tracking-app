@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { PencilSimple, Trash } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -177,7 +177,7 @@ export function FoodCard({ food }: { food: FoodData }) {
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <Pencil className="h-4 w-4" />
+                  <PencilSimple className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -194,7 +194,7 @@ export function FoodCard({ food }: { food: FoodData }) {
               </DialogContent>
             </Dialog>
             <Button variant="ghost" size="icon" className="text-destructive" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
           </div>
         </div>

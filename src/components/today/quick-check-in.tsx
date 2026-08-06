@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ChevronDown, ClipboardList } from "lucide-react";
+import { CaretDown, ClipboardText } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,7 +84,7 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" />
+          <ClipboardText className="h-5 w-5 text-primary" />
           Quick Check-in
         </CardTitle>
       </CardHeader>
@@ -137,7 +137,7 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
           className="flex w-full items-center justify-between rounded-none border px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
         >
           <span>Nutrition, activity & notes</span>
-          <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
+          <CaretDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
         </button>
 
         {expanded && (

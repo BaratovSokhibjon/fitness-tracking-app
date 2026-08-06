@@ -3,28 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Activity,
-  CalendarDays,
-  Dumbbell,
-  Goal,
-  Home,
-  LineChart,
-  Settings,
+  Barbell,
+  CalendarDots,
+  ChartLine,
+  Crosshair,
+  ForkKnife,
+  GearSix,
+  House,
+  Pulse,
   Target,
-  TrendingUp,
-  Utensils,
-} from "lucide-react";
+  TrendUp,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", label: "Today", icon: Home },
-  { href: "/history", label: "History", icon: LineChart },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/program", label: "Program", icon: Dumbbell },
-  { href: "/progress", label: "Progress", icon: TrendingUp },
-  { href: "/foods", label: "Foods", icon: Utensils },
-  { href: "/review", label: "Review", icon: Activity },
-  { href: "/goals", label: "Goals", icon: Goal },
+  { href: "/", label: "Today", icon: House },
+  { href: "/history", label: "History", icon: ChartLine },
+  { href: "/calendar", label: "Calendar", icon: CalendarDots },
+  { href: "/program", label: "Program", icon: Barbell },
+  { href: "/progress", label: "Progress", icon: TrendUp },
+  { href: "/foods", label: "Foods", icon: ForkKnife },
+  { href: "/review", label: "Review", icon: Pulse },
+  { href: "/goals", label: "Goals", icon: Target },
 ];
 
 export function Sidebar() {
@@ -33,7 +33,7 @@ export function Sidebar() {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-hairline bg-canvas md:flex">
       <div className="flex h-14 items-center gap-2 border-b border-hairline px-4">
-        <Dumbbell className="h-5 w-5 text-ink" />
+        <Barbell className="h-5 w-5 text-ink" />
         <span className="text-sm font-medium uppercase tracking-wider text-ink">Fitness Tracker</span>
       </div>
       <nav className="flex-1 py-3">
@@ -66,7 +66,7 @@ export function Sidebar() {
               : "text-mute hover:bg-soft-cloud hover:text-ink"
           )}
         >
-          <Settings className="h-4 w-4" />
+          <GearSix className="h-4 w-4" />
           Profile
         </Link>
         <Link
@@ -78,7 +78,7 @@ export function Sidebar() {
               : "text-mute hover:bg-soft-cloud hover:text-ink"
           )}
         >
-          <Target className="h-4 w-4" />
+          <Crosshair className="h-4 w-4" />
           Workout Log
         </Link>
       </div>

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { format, addMonths, subMonths } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,10 +45,10 @@ export function WorkoutCalendar({ initialDate, days }: { initialDate: Date; days
         <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">{format(month, "MMMM yyyy")}</h1>
         <div className="flex gap-1">
           <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))}>
-            <ChevronLeft className="h-4 w-4" />
+            <CaretLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))}>
-            <ChevronRight className="h-4 w-4" />
+            <CaretRight className="h-4 w-4" />
           </Button>
         </div>
       </div>

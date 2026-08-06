@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Trash2, Upload } from "lucide-react";
+import { Trash, UploadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export function PhotoGallery({ photos }: { photos: { id: string; imageUrl: strin
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5 text-primary" />
+            <UploadSimple className="h-5 w-5 text-primary" />
             Upload Photo
           </CardTitle>
           <CardDescription>Add a progress photo.</CardDescription>
@@ -112,7 +112,7 @@ export function PhotoGallery({ photos }: { photos: { id: string; imageUrl: strin
                   </p>
                 </div>
                 <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(photo.id)}>
-                  <Trash2 className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>

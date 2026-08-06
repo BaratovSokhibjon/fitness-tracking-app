@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Droplets } from "lucide-react";
+import { Drop } from "@phosphor-icons/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +23,7 @@ export function WaterCounter({ date, water, target }: { date: string; water: num
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Droplets className="h-5 w-5 text-info" />
+          <Drop className="h-5 w-5 text-info" />
           Water
         </CardTitle>
         <CardDescription>

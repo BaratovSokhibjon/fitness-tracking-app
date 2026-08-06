@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Plus, Search, Upload } from "lucide-react";
+import { DownloadSimple, MagnifyingGlass, Plus, UploadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -71,13 +71,13 @@ export function FoodsPage({ foods }: { foods: FoodData[] }) {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4" />
+            <DownloadSimple className="h-4 w-4" />
             Export JSON
           </Button>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <Upload className="h-4 w-4" />
+                <UploadSimple className="h-4 w-4" />
                 Import JSON
               </Button>
             </DialogTrigger>
@@ -137,7 +137,7 @@ export function FoodsPage({ foods }: { foods: FoodData[] }) {
       </div>
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="pl-9"
           placeholder="Search foods…"

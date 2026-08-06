@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Check, Dumbbell } from "lucide-react";
+import { Barbell, CalendarDots, Check } from "@/components/icons";
 import { getProgramList } from "@/queries/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,13 +48,13 @@ export default async function ProgramPage() {
               <CardFooter className="gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/program/${program.id}`}>
-                    <CalendarDays className="h-4 w-4" />
+                    <CalendarDots className="h-4 w-4" />
                     Edit Program
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/calendar">
-                    <Dumbbell className="h-4 w-4" />
+                    <Barbell className="h-4 w-4" />
                     View Calendar
                   </Link>
                 </Button>
