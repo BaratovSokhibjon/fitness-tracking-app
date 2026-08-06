@@ -79,7 +79,7 @@ export function FoodSelector({ date }: { date: string }) {
             ) : (
               results.map((food) => {
                 return (
-                  <div key={food.id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
+                  <div key={food.id} className="flex items-center justify-between gap-2 rounded-none border px-3 py-2">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-medium">
                         <span className="truncate">{food.name}</span>
@@ -153,19 +153,19 @@ export function FoodLogSection({ date }: { date: string }) {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="rounded-md border px-2 py-1.5">
+          <div className="rounded-none border px-2 py-1.5">
             <p className="text-sm font-semibold">{totals.calories}</p>
             <p className="text-xs text-muted-foreground">kcal</p>
           </div>
-          <div className="rounded-md border px-2 py-1.5">
+          <div className="rounded-none border px-2 py-1.5">
             <p className="text-sm font-semibold">{Math.round(totals.protein)}g</p>
             <p className="text-xs text-muted-foreground">protein</p>
           </div>
-          <div className="rounded-md border px-2 py-1.5">
+          <div className="rounded-none border px-2 py-1.5">
             <p className="text-sm font-semibold">{Math.round(totals.carbs)}g</p>
             <p className="text-xs text-muted-foreground">carbs</p>
           </div>
-          <div className="rounded-md border px-2 py-1.5">
+          <div className="rounded-none border px-2 py-1.5">
             <p className="text-sm font-semibold">{Math.round(totals.fat)}g</p>
             <p className="text-xs text-muted-foreground">fat</p>
           </div>
@@ -176,7 +176,7 @@ export function FoodLogSection({ date }: { date: string }) {
         ) : (
           <ul className="space-y-1.5">
             {entries.map((entry) => (
-              <li key={entry.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+              <li key={entry.id} className="flex items-center justify-between rounded-none border px-3 py-2 text-sm">
                 <div>
                   <p className="font-medium">
                     {entry.foodItem.name}{" "}

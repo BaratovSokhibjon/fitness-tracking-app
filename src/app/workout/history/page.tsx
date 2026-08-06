@@ -10,7 +10,7 @@ export default async function WorkoutHistoryPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Workout History</h1>
+      <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Workout History</h1>
       {sessions.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">

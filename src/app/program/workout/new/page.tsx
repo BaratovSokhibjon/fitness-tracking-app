@@ -8,7 +8,7 @@ export default async function NewWorkoutPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">New Workout</h1>
+      <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">New Workout</h1>
       <WorkoutForm programs={programs} />
     </div>
   );

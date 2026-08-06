@@ -19,7 +19,7 @@ export default async function ReviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Weekly Review</h1>
+        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Weekly Review</h1>
         <p className="text-sm text-muted-foreground">
           Week {weekNumber} · {format(review.weekStart, "MMM d")} – {format(review.weekEnd, "MMM d")}
         </p>
@@ -74,11 +74,11 @@ export default async function ReviewPage() {
           <CardDescription>Weekly averages</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="flex items-center justify-between border rounded-md px-3 py-2 text-sm">
+          <div className="flex items-center justify-between border rounded-none px-3 py-2 text-sm">
             <span className="text-muted-foreground">Calories</span>
             <span className="font-medium">{review.stats.avgCalories} kcal</span>
           </div>
-          <div className="flex items-center justify-between border rounded-md px-3 py-2 text-sm">
+          <div className="flex items-center justify-between border rounded-none px-3 py-2 text-sm">
             <span className="text-muted-foreground">Protein</span>
             <span className="font-medium">{review.stats.avgProtein} g</span>
           </div>

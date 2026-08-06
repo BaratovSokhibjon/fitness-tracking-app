@@ -18,7 +18,7 @@ export default async function EditProgramPage({ params }: { params: Promise<{ pr
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{program.name}</h1>
+        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">{program.name}</h1>
         <Button asChild variant="outline" size="sm">
           <Link href="/program">← Programs</Link>
         </Button>

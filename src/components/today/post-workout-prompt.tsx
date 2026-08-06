@@ -37,9 +37,9 @@ export function PostWorkoutPrompt({
   }
 
   return (
-    <Card className="border-emerald-300 bg-emerald-50/50">
+    <Card className="border-success bg-success/10">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-emerald-800">
+        <CardTitle className="flex items-center gap-2 text-success">
           <PartyPopper className="h-5 w-5" />
           Workout completed {duration ? `— ${formatDuration(duration)}` : ""}
         </CardTitle>

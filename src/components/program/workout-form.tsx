@@ -173,7 +173,7 @@ export function WorkoutForm({
           {exercises.length > 0 && (
             <div className="space-y-2">
               {exercises.map((ex) => (
-                <div key={ex.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                <div key={ex.id} className="flex items-center justify-between rounded-none border px-3 py-2 text-sm">
                   <div>
                     <p className="font-medium">{ex.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -200,7 +200,7 @@ export function WorkoutForm({
             </div>
           )}
 
-          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_5rem_5rem_5rem_auto] sm:items-end">
+          <div className="grid gap-3 rounded-none border p-3 sm:grid-cols-[1fr_5rem_5rem_5rem_auto] sm:items-end">
             <div className="space-y-1.5">
               <Label htmlFor="ex-name">Exercise</Label>
               <Input id="ex-name" value={newExercise.name} onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })} placeholder="Push-ups" />

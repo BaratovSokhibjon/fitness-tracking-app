@@ -23,7 +23,7 @@ export default async function ProgressPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Progress</h1>
+        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Progress</h1>
         <p className="text-sm text-muted-foreground">Body measurements over time.</p>
       </div>
 
@@ -36,11 +36,11 @@ export default async function ProgressPage() {
           </p>
         ) : (
           <>
-            <MeasurementChart title="Weight" data={weightData} unit="kg" color="#16a34a" />
-            <MeasurementChart title="Waist" data={waistData} color="#ea580c" />
-            <MeasurementChart title="Chest" data={chestData} color="#7c3aed" />
-            <MeasurementChart title="Arms (avg)" data={armsData} color="#2563eb" />
-            <MeasurementChart title="Thighs (avg)" data={thighsData} color="#0891b2" />
+            <MeasurementChart title="Weight" data={weightData} unit="kg" color="#111111" />
+            <MeasurementChart title="Waist" data={waistData} color="#0a7281" />
+            <MeasurementChart title="Chest" data={chestData} color="#ed1aa0" />
+            <MeasurementChart title="Arms (avg)" data={armsData} color="#007d48" />
+            <MeasurementChart title="Thighs (avg)" data={thighsData} color="#4c012d" />
           </>
         )}
       </div>

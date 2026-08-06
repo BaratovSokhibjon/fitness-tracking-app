@@ -66,7 +66,7 @@ export function FoodsPage({ foods }: { foods: FoodData[] }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Foods</h1>
+          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Foods</h1>
           <p className="text-sm text-muted-foreground">Your food database for meal logging.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export function FoodsPage({ foods }: { foods: FoodData[] }) {
                     }}
                   />
                 </div>
-                {result && <p className="text-sm text-emerald-600">{result}</p>}
+                {result && <p className="text-sm text-success">{result}</p>}
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <div className="flex justify-end">
                   <Button onClick={handleImport} disabled={!importFile || importing}>

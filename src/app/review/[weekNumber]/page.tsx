@@ -20,7 +20,7 @@ export default async function ReviewWeekPage({ params }: { params: Promise<{ wee
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Week {weekNumber} Review</h1>
+          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Week {weekNumber} Review</h1>
           <p className="text-sm text-muted-foreground">
             {format(review.weekStart, "MMM d")} – {format(review.weekEnd, "MMM d")}
           </p>

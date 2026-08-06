@@ -11,7 +11,7 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{schedule.workout.name}</h1>
+        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">{schedule.workout.name}</h1>
         <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to Today
         </Link>

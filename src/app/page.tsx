@@ -15,7 +15,7 @@ export default async function TodayPage() {
     <div className="space-y-6">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Today</h1>
+          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Today</h1>
           <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, MMMM d")}</p>
         </div>
       </header>

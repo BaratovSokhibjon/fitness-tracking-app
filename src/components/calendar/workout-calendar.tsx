@@ -42,7 +42,7 @@ export function WorkoutCalendar({ initialDate, days }: { initialDate: Date; days
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{format(month, "MMMM yyyy")}</h1>
+        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">{format(month, "MMMM yyyy")}</h1>
         <div className="flex gap-1">
           <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))}>
             <ChevronLeft className="h-4 w-4" />
@@ -72,14 +72,14 @@ export function WorkoutCalendar({ initialDate, days }: { initialDate: Date; days
               disabled={!day || day.status === "REST"}
               onClick={() => day && setSelected(day)}
               className={cn(
-                "flex h-16 flex-col items-center justify-center rounded-md border text-sm transition-colors sm:h-20",
+                "flex h-16 flex-col items-center justify-center rounded-none border text-sm transition-colors sm:h-20",
                 !inMonth && "text-muted-foreground/40",
                 inMonth && !day && "border-transparent",
-                day?.status === "COMPLETED" && "border-emerald-300 bg-emerald-50 text-emerald-800",
-                day?.status === "SKIPPED" && "border-amber-300 bg-amber-50 text-amber-800",
-                day?.status === "PLANNED" && "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100",
+                day?.status === "COMPLETED" && "border-success bg-success/10 text-success",
+                day?.status === "SKIPPED" && "border-hairline bg-soft-cloud text-mute",
+                day?.status === "PLANNED" && "border-info bg-info/10 text-info-deep hover:bg-info/20",
                 day?.status === "REST" && inMonth && "border-border text-muted-foreground/50",
-                isToday && "ring-2 ring-primary ring-offset-1"
+                isToday && "ring-2 ring-ink ring-offset-1"
               )}
             >
               <span className="text-xs font-medium">{date.getDate()}</span>

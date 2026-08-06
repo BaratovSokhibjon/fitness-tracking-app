@@ -12,7 +12,7 @@ export default async function PhotosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Progress Photos</h1>
+          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Progress Photos</h1>
           <p className="text-sm text-muted-foreground">Visual progress over time.</p>
         </div>
         <Button asChild variant="outline" size="sm">

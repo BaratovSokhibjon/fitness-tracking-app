@@ -23,7 +23,7 @@ export function WaterCounter({ date, water, target }: { date: string; water: num
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Droplets className="h-5 w-5 text-blue-500" />
+          <Droplets className="h-5 w-5 text-info" />
           Water
         </CardTitle>
         <CardDescription>

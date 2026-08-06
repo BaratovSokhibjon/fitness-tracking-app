@@ -134,7 +134,7 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
+          className="flex w-full items-center justify-between rounded-none border px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
         >
           <span>Nutrition, activity & notes</span>
           <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />

@@ -25,7 +25,7 @@ export function TrendLineChart({
   description,
   data,
   unit = "",
-  color = "#2563eb",
+  color = "#111111",
 }: {
   title: string;
   description: string;
@@ -59,7 +59,7 @@ export function TrendBarChart({
   description,
   data,
   unit = "",
-  color = "#2563eb",
+  color = "#111111",
 }: {
   title: string;
   description: string;

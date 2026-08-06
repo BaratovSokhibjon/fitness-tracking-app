@@ -31,7 +31,7 @@ export function WorkoutCard({
         <CardTitle className="flex items-center gap-2">
           {completedToday ? (
             <>
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <CheckCircle2 className="h-5 w-5 text-success-bright" />
               Today&apos;s Workout
             </>
           ) : (

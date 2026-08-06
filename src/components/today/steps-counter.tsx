@@ -26,7 +26,7 @@ export function StepsCounter({ date, steps, target }: { date: string; steps: num
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Footprints className="h-5 w-5 text-emerald-600" />
+          <Footprints className="h-5 w-5 text-success" />
           Steps
         </CardTitle>
         <CardDescription>

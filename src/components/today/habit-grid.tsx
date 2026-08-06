@@ -39,7 +39,7 @@ export function HabitGrid({
                 type="button"
                 onClick={() => handleToggle(h.id, !h.completed)}
                 className={cn(
-                  "flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-2 rounded-none border px-3 py-2 text-sm transition-colors",
                   h.completed
                     ? "border-primary/50 bg-primary/10 text-foreground"
                     : "text-muted-foreground hover:bg-accent"
