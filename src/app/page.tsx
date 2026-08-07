@@ -8,6 +8,8 @@ import { StepsCounter } from "@/components/today/steps-counter";
 import { PostWorkoutPrompt } from "@/components/today/post-workout-prompt";
 import { FoodLogSection } from "@/components/today/food-log";
 
+export const dynamic = "force-dynamic";
+
 export default async function TodayPage() {
   const data = await getTodayData();
 
@@ -38,14 +40,14 @@ export default async function TodayPage() {
       <QuickCheckIn
         date={new Date().toISOString()}
         initial={{
-          morningWeight: data.todayCheckIn?.morningWeight ?? data.yesterdayWeight,
-          sleepHours: data.todayCheckIn?.sleepHours,
-          energy: data.todayCheckIn?.energy,
-          mood: data.todayCheckIn?.mood,
-          calories: data.todayCheckIn?.calories,
-          protein: data.todayCheckIn?.protein,
-          carbs: data.todayCheckIn?.carbs,
-          fat: data.todayCheckIn?.fat,
+          morningWeight: data.todayCheckIn?.morningWeight ?? data.yesterdayCheckIn?.morningWeight ?? null,
+          sleepHours: data.todayCheckIn?.sleepHours ?? data.yesterdayCheckIn?.sleepHours ?? null,
+          energy: data.todayCheckIn?.energy ?? data.yesterdayCheckIn?.energy ?? null,
+          mood: data.todayCheckIn?.mood ?? data.yesterdayCheckIn?.mood ?? null,
+          calories: data.todayCheckIn?.calories ?? data.yesterdayCheckIn?.calories ?? null,
+          protein: data.todayCheckIn?.protein ?? data.yesterdayCheckIn?.protein ?? null,
+          carbs: data.todayCheckIn?.carbs ?? data.yesterdayCheckIn?.carbs ?? null,
+          fat: data.todayCheckIn?.fat ?? data.yesterdayCheckIn?.fat ?? null,
           notes: data.todayCheckIn?.notes ?? "",
         }}
       />

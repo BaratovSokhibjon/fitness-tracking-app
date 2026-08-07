@@ -26,7 +26,16 @@ export async function getTodayData() {
       prisma.dailyCheckIn.findFirst({
         where: { date: { lt: today } },
         orderBy: { date: "desc" },
-        select: { morningWeight: true },
+        select: {
+          morningWeight: true,
+          sleepHours: true,
+          energy: true,
+          mood: true,
+          calories: true,
+          protein: true,
+          carbs: true,
+          fat: true,
+        },
       }),
       prisma.habit.findMany({
         where: { isActive: true },
@@ -58,7 +67,7 @@ export async function getTodayData() {
       : null,
     weeklyProgress: { completed: weeklyCompleted, total: weeklyTotal },
     todayCheckIn,
-    yesterdayWeight: yesterdayCheckIn?.morningWeight ?? null,
+    yesterdayCheckIn,
     todayHabits: todayHabits.map((h) => ({
       id: h.id,
       name: h.name,

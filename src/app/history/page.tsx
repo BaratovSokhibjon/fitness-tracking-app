@@ -2,6 +2,8 @@ import { format } from "date-fns";
 import { getHistoryData } from "@/queries/history";
 import { TrendBarChart, TrendLineChart } from "@/components/history/trend-charts";
 
+export const dynamic = "force-dynamic";
+
 export default async function HistoryPage() {
   const { checkIns } = await getHistoryData(30);
 

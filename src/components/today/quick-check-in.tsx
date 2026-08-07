@@ -3,11 +3,11 @@
 import { useRef, useState } from "react";
 import { CaretDown, ClipboardText } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
 import { saveQuickCheckIn, saveNutrition } from "@/actions/check-in";
 
@@ -24,14 +24,14 @@ type Initial = {
 };
 
 export function QuickCheckIn({ date, initial }: { date: string; initial: Initial }) {
-  const [weight, setWeight] = useState(initial.morningWeight?.toString() ?? "");
-  const [sleep, setSleep] = useState(initial.sleepHours?.toString() ?? "");
+  const [weight, setWeight] = useState<number | null>(initial.morningWeight ?? null);
+  const [sleep, setSleep] = useState<number | null>(initial.sleepHours ?? null);
   const [energy, setEnergy] = useState(initial.energy ?? 5);
   const [mood, setMood] = useState(initial.mood ?? 5);
-  const [calories, setCalories] = useState(initial.calories?.toString() ?? "");
-  const [protein, setProtein] = useState(initial.protein?.toString() ?? "");
-  const [carbs, setCarbs] = useState(initial.carbs?.toString() ?? "");
-  const [fat, setFat] = useState(initial.fat?.toString() ?? "");
+  const [calories, setCalories] = useState<number | null>(initial.calories ?? null);
+  const [protein, setProtein] = useState<number | null>(initial.protein ?? null);
+  const [carbs, setCarbs] = useState<number | null>(initial.carbs ?? null);
+  const [fat, setFat] = useState<number | null>(initial.fat ?? null);
   const [notes, setNotes] = useState(initial.notes);
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -55,8 +55,8 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
     scheduleSave(() =>
       saveQuickCheckIn({
         date,
-        morningWeight: weight ? parseFloat(weight) : null,
-        sleepHours: sleep ? parseFloat(sleep) : null,
+        morningWeight: weight,
+        sleepHours: sleep,
         energy,
         mood,
       })
@@ -67,14 +67,14 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
     scheduleSave(() =>
       saveNutrition({
         date,
-        morningWeight: weight ? parseFloat(weight) : null,
-        sleepHours: sleep ? parseFloat(sleep) : null,
+        morningWeight: weight,
+        sleepHours: sleep,
         energy,
         mood,
-        calories: calories ? parseInt(calories) : null,
-        protein: protein ? parseInt(protein) : null,
-        carbs: carbs ? parseInt(carbs) : null,
-        fat: fat ? parseInt(fat) : null,
+        calories,
+        protein,
+        carbs,
+        fat,
         notes,
       })
     );
@@ -92,24 +92,32 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="weight">Morning weight (kg)</Label>
-            <Input
+            <NumberInput
               id="weight"
-              inputMode="decimal"
-              placeholder="e.g. 76.8"
               value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              onBlur={saveQuick}
+              onValueChange={setWeight}
+              onCommit={() => saveQuick()}
+              min={20}
+              max={300}
+              step={0.1}
+              decimals={1}
+              placeholder="e.g. 76.8"
+              aria-label="Morning weight"
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="sleep">Sleep (hours)</Label>
-            <Input
+            <NumberInput
               id="sleep"
-              inputMode="decimal"
-              placeholder="e.g. 7.5"
               value={sleep}
-              onChange={(e) => setSleep(e.target.value)}
-              onBlur={saveQuick}
+              onValueChange={setSleep}
+              onCommit={() => saveQuick()}
+              min={0}
+              max={24}
+              step={0.5}
+              decimals={1}
+              placeholder="e.g. 7.5"
+              aria-label="Sleep hours"
             />
           </div>
         </div>
@@ -145,19 +153,19 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="space-y-1.5">
                 <Label htmlFor="cal">Calories</Label>
-                <Input id="cal" inputMode="numeric" value={calories} onChange={(e) => setCalories(e.target.value)} onBlur={saveExtended} />
+                <NumberInput id="cal" value={calories} onValueChange={setCalories} onCommit={() => saveExtended()} min={0} step={10} decimals={0} aria-label="Calories" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="protein">Protein (g)</Label>
-                <Input id="protein" inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value)} onBlur={saveExtended} />
+                <NumberInput id="protein" value={protein} onValueChange={setProtein} onCommit={() => saveExtended()} min={0} step={5} decimals={0} aria-label="Protein" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="carbs">Carbs (g)</Label>
-                <Input id="carbs" inputMode="numeric" value={carbs} onChange={(e) => setCarbs(e.target.value)} onBlur={saveExtended} />
+                <NumberInput id="carbs" value={carbs} onValueChange={setCarbs} onCommit={() => saveExtended()} min={0} step={5} decimals={0} aria-label="Carbs" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="fat">Fat (g)</Label>
-                <Input id="fat" inputMode="numeric" value={fat} onChange={(e) => setFat(e.target.value)} onBlur={saveExtended} />
+                <NumberInput id="fat" value={fat} onValueChange={setFat} onCommit={() => saveExtended()} min={0} step={5} decimals={0} aria-label="Fat" />
               </div>
             </div>
             <div className="space-y-1.5">

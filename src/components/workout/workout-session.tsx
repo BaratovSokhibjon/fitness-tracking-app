@@ -7,7 +7,7 @@ import { Timer } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { logSet, startSession, completeSession } from "@/actions/session";
 import { epley1RM } from "@/lib/utils";
@@ -35,7 +35,7 @@ type Log = {
   rpe: number | null;
 };
 
-type SetState = { weight: string; reps: string; durationSec: string; rpe: string };
+type SetState = { weight: number | null; reps: number | null; durationSec: number | null; rpe: string };
 
 type HistorySession = { date: Date; rows: ExerciseHistoryRow[] };
 
@@ -73,9 +73,9 @@ export function WorkoutSession({
       for (let i = 0; i < ex.sets; i++) {
         const log = existingLogs.find((l) => l.exerciseId === ex.id && l.setNumber === i + 1);
         rows.push({
-          weight: log?.weight != null ? String(log.weight) : "",
-          reps: log?.reps != null ? String(log.reps) : "",
-          durationSec: log?.durationSec != null ? String(log.durationSec) : "",
+          weight: log?.weight ?? null,
+          reps: log?.reps ?? null,
+          durationSec: log?.durationSec ?? null,
           rpe: log?.rpe != null ? String(log.rpe) : "",
         });
       }
@@ -135,23 +135,34 @@ export function WorkoutSession({
     });
   }
 
+  function updateNumeric(exerciseId: string, index: number, field: "weight" | "reps" | "durationSec", value: number | null) {
+    setSets((prev) => {
+      const next = { ...prev };
+      next[exerciseId] = next[exerciseId].map((s, i) => (i === index ? { ...s, [field]: value } : s));
+      return next;
+    });
+  }
+
+  function buildLog(exercise: Exercise, row: SetState, setNumber: number) {
+    return {
+      exerciseId: exercise.id,
+      setNumber,
+      weight: exercise.type === "WEIGHTED" ? row.weight : null,
+      reps: exercise.type !== "TIMED" ? row.reps : null,
+      durationSec: exercise.type === "TIMED" ? row.durationSec : null,
+      rpe: row.rpe ? parseFloat(row.rpe) : null,
+    };
+  }
+
   function finishSet(exercise: Exercise, index: number) {
     const row = sets[exercise.id][index];
-    const reps = parseInt(row.reps, 10);
-    const duration = parseInt(row.durationSec, 10);
-    if (Number.isNaN(reps) && Number.isNaN(duration)) return;
+    const reps = exercise.type !== "TIMED" ? row.reps : null;
+    const duration = exercise.type === "TIMED" ? row.durationSec : null;
+    if (reps == null && duration == null) return;
 
     void (async () => {
       await startSession(scheduleId);
-      await logSet({
-        scheduleId,
-        exerciseId: exercise.id,
-        setNumber: index + 1,
-        weight: exercise.type === "WEIGHTED" && row.weight ? parseFloat(row.weight) : null,
-        reps: exercise.type !== "TIMED" && !Number.isNaN(reps) ? reps : null,
-        durationSec: exercise.type === "TIMED" && !Number.isNaN(duration) ? duration : null,
-        rpe: row.rpe ? parseFloat(row.rpe) : null,
-      });
+      await logSet({ scheduleId, ...buildLog(exercise, row, index + 1) });
     })();
 
     // Auto-start rest timer after the last logged set unless it's the final set.
@@ -160,20 +171,11 @@ export function WorkoutSession({
     }
   }
 
-  async function saveSetValues(exercise: Exercise, index: number, weight: string, reps: string, durationSec: string, rpe: string) {
-    const repsNum = parseInt(reps, 10);
-    const durationNum = parseInt(durationSec, 10);
-    if (Number.isNaN(repsNum) && Number.isNaN(durationNum)) return;
+  async function saveSetValues(exercise: Exercise, index: number, rpe: string) {
+    const row = sets[exercise.id][index];
+    if (row.reps == null && row.durationSec == null) return;
     await startSession(scheduleId);
-    await logSet({
-      scheduleId,
-      exerciseId: exercise.id,
-      setNumber: index + 1,
-      weight: exercise.type === "WEIGHTED" && weight ? parseFloat(weight) : null,
-      reps: exercise.type !== "TIMED" && !Number.isNaN(repsNum) ? repsNum : null,
-      durationSec: exercise.type === "TIMED" && !Number.isNaN(durationNum) ? durationNum : null,
-      rpe: rpe ? parseFloat(rpe) : null,
-    });
+    await logSet({ scheduleId, ...buildLog(exercise, { ...row, rpe }, index + 1) });
   }
 
   function formatElapsed(seconds: number) {
@@ -194,17 +196,10 @@ export function WorkoutSession({
     const logs = exercises.flatMap((ex) =>
       sets[ex.id]
         .map((row, i) => {
-          const reps = parseInt(row.reps, 10);
-          const duration = parseInt(row.durationSec, 10);
-          if (Number.isNaN(reps) && Number.isNaN(duration)) return null;
-          return {
-            exerciseId: ex.id,
-            setNumber: i + 1,
-            weight: ex.type === "WEIGHTED" && row.weight ? parseFloat(row.weight) : null,
-            reps: ex.type !== "TIMED" && !Number.isNaN(reps) ? reps : null,
-            durationSec: ex.type === "TIMED" && !Number.isNaN(duration) ? duration : null,
-            rpe: row.rpe ? parseFloat(row.rpe) : null,
-          };
+          const reps = ex.type !== "TIMED" ? row.reps : null;
+          const duration = ex.type === "TIMED" ? row.durationSec : null;
+          if (reps == null && duration == null) return null;
+          return buildLog(ex, row, i + 1);
         })
         .filter((l): l is NonNullable<typeof l> => l !== null)
     );
@@ -313,49 +308,53 @@ export function WorkoutSession({
                 <div className="text-xs font-medium text-muted-foreground">RPE</div>
 
                 {sets[ex.id]?.map((row, i) => {
-                  const repsNum = parseInt(row.reps, 10);
-                  const weightNum = row.weight ? parseFloat(row.weight) : null;
                   const est1RM =
-                    ex.type === "WEIGHTED" && !Number.isNaN(repsNum) && weightNum != null
-                      ? epley1RM(weightNum, repsNum)
+                    ex.type === "WEIGHTED" && row.reps != null && row.weight != null
+                      ? epley1RM(row.weight, row.reps)
                       : null;
                   return (
                     <div key={i} className="contents">
                       <div className="flex items-center text-sm text-muted-foreground">{i + 1}</div>
                       {ex.type === "TIMED" ? (
-                        <Input
-                          className="h-8"
-                          inputMode="numeric"
+                        <NumberInput
                           value={row.durationSec}
-                          onChange={(e) => updateSet(ex.id, i, "durationSec", e.target.value)}
-                          onBlur={() => finishSet(ex, i)}
+                          onValueChange={(v) => updateNumeric(ex.id, i, "durationSec", v)}
+                          onCommit={() => finishSet(ex, i)}
+                          min={0}
+                          step={5}
+                          decimals={0}
                           placeholder="sec"
+                          aria-label={`${ex.name} set ${i + 1} duration`}
                         />
                       ) : (
-                        <Input
-                          className="h-8"
-                          inputMode="numeric"
+                        <NumberInput
                           value={row.reps}
-                          onChange={(e) => updateSet(ex.id, i, "reps", e.target.value)}
-                          onBlur={() => finishSet(ex, i)}
+                          onValueChange={(v) => updateNumeric(ex.id, i, "reps", v)}
+                          onCommit={() => finishSet(ex, i)}
+                          min={0}
+                          step={1}
+                          decimals={0}
                           placeholder="reps"
+                          aria-label={`${ex.name} set ${i + 1} reps`}
                         />
                       )}
                       {ex.type === "WEIGHTED" && (
-                        <Input
-                          className="h-8"
-                          inputMode="decimal"
+                        <NumberInput
                           value={row.weight}
-                          onChange={(e) => updateSet(ex.id, i, "weight", e.target.value)}
-                          onBlur={() => finishSet(ex, i)}
+                          onValueChange={(v) => updateNumeric(ex.id, i, "weight", v)}
+                          onCommit={() => finishSet(ex, i)}
+                          min={0}
+                          step={2.5}
+                          decimals={1}
                           placeholder="kg"
+                          aria-label={`${ex.name} set ${i + 1} weight`}
                         />
                       )}
                       <Select
                         value={row.rpe}
                         onValueChange={(v) => {
                           updateSet(ex.id, i, "rpe", v);
-                          void saveSetValues(ex, i, row.weight, row.reps, row.durationSec, v);
+                          void saveSetValues(ex, i, v);
                         }}
                       >
                         <SelectTrigger className="h-8">

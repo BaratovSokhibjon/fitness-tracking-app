@@ -31,12 +31,12 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col border-r border-hairline bg-canvas md:flex">
-      <div className="flex h-14 items-center gap-2 border-b border-hairline px-4">
+    <aside className="hidden h-dvh w-56 shrink-0 flex-col overflow-hidden border-r border-hairline bg-canvas md:flex">
+      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-hairline px-4">
         <Barbell className="h-5 w-5 text-ink" />
         <span className="text-sm font-medium uppercase tracking-wider text-ink">Somatix</span>
       </div>
-      <nav className="flex-1 py-3">
+      <nav className="min-h-0 flex-1 overflow-y-auto py-3">
         {navItems.map((item) => {
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
@@ -56,7 +56,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-hairline py-3">
+      <div className="shrink-0 border-t border-hairline py-3">
         <Link
           href="/profile"
           className={cn(
