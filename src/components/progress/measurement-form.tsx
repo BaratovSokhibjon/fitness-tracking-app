@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { saveMeasurement } from "@/actions/progress";
 
 type MeasurementFormData = {
@@ -91,7 +93,12 @@ export function MeasurementForm({ initial }: { initial?: MeasurementFormData }) 
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="measurement-date">Date</Label>
-          <Input id="measurement-date" type="date" value={form.date} onChange={set("date")} />
+          <DatePicker
+            date={form.date ? new Date(`${form.date}T00:00:00`) : undefined}
+            onSelect={(d) => {
+              if (d) setForm((f) => ({ ...f, date: format(d, "yyyy-MM-dd") }));
+            }}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {fields.map((f) => (

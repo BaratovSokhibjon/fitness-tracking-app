@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { Flask } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { updateCreatineConfig } from "@/actions/creatine";
 
 export type CreatineConfigData = {
@@ -97,11 +99,11 @@ export function CreatineForm({ config }: { config: CreatineConfigData | null }) 
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="creatine-start">Start date</Label>
-                <Input
-                  id="creatine-start"
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                <DatePicker
+                  date={form.startDate ? new Date(`${form.startDate}T00:00:00`) : undefined}
+                  onSelect={(d) => {
+                    if (d) setForm((f) => ({ ...f, startDate: format(d, "yyyy-MM-dd") }));
+                  }}
                 />
               </div>
               {form.protocol === "LOADING" ? (

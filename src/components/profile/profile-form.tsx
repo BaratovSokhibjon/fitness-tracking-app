@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { updateProfile } from "@/actions/profile";
 
 export type ProfileData = {
@@ -93,7 +95,12 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="start-date">Program start date</Label>
-            <Input id="start-date" type="date" value={form.programStartDate} onChange={set("programStartDate")} />
+            <DatePicker
+              date={form.programStartDate ? new Date(`${form.programStartDate}T00:00:00`) : undefined}
+              onSelect={(d) => {
+                if (d) setForm((f) => ({ ...f, programStartDate: format(d, "yyyy-MM-dd") }));
+              }}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="age">Age</Label>

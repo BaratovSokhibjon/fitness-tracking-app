@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { format } from "date-fns";
 import { Trash, UploadSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { uploadPhoto, deletePhoto } from "@/actions/progress";
 
 const typeLabels: Record<string, string> = {
@@ -53,7 +55,12 @@ export function PhotoGallery({ photos }: { photos: { id: string; imageUrl: strin
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="photo-date">Date</Label>
-              <Input id="photo-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker
+                date={date ? new Date(`${date}T00:00:00`) : undefined}
+                onSelect={(d) => {
+                  if (d) setDate(format(d, "yyyy-MM-dd"));
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Type</Label>
