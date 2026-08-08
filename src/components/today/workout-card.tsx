@@ -9,7 +9,7 @@ import { percent } from "@/lib/utils";
 type TodaySchedule = {
   id: string;
   status: string;
-  session: { duration: number | null } | null;
+  session: { duration: number | null; startedAt: Date | null } | null;
   workout: {
     name: string;
     exercises: { exercise: { name: string }; sets: number; repRange: string }[];
@@ -24,6 +24,7 @@ export function WorkoutCard({
   weeklyProgress: { completed: number; total: number };
 }) {
   const completedToday = schedule?.status === "COMPLETED";
+  const inProgressToday = !completedToday && Boolean(schedule?.session?.startedAt);
 
   return (
     <Card>
@@ -42,7 +43,9 @@ export function WorkoutCard({
           )}
         </CardTitle>
         <CardDescription>
-          Week progress: {weeklyProgress.completed}/{weeklyProgress.total} completed
+          {inProgressToday
+            ? "Workout in progress"
+            : `Week progress: ${weeklyProgress.completed}/${weeklyProgress.total} completed`}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -73,7 +76,9 @@ export function WorkoutCard({
               </div>
             </div>
             <Button asChild>
-              <Link href={`/workout/${schedule.id}`}>Start Workout</Link>
+              <Link href={`/workout/${schedule.id}`}>
+                {inProgressToday ? "Resume Workout" : "Start Workout"}
+              </Link>
             </Button>
           </div>
         )}

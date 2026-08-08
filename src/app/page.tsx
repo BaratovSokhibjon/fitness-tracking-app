@@ -29,13 +29,13 @@ export default async function TodayPage() {
         weeklyProgress={data.weeklyProgress}
       />
 
-      {data.todaySchedule?.session && (
+      {data.todaySchedule?.status === "COMPLETED" && (
         <PostWorkoutPrompt
           date={new Date().toISOString()}
           initialEnergy={data.todayCheckIn?.energy ?? null}
           initialSoreness={data.todayCheckIn?.soreness ?? null}
           initialNotes={data.todayCheckIn?.notes ?? ""}
-          duration={data.todaySchedule.session.duration}
+          duration={data.todaySchedule.session?.duration ?? null}
         />
       )}
 
