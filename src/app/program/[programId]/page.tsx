@@ -30,6 +30,8 @@ export default async function EditProgramPage({ params }: { params: Promise<{ pr
           name: program.name,
           description: program.description,
           durationWeeks: program.durationWeeks,
+          progressionType: program.progressionType,
+          roundTo: program.roundTo,
           isActive: program.isActive,
         }}
       />
@@ -65,7 +67,8 @@ export default async function EditProgramPage({ params }: { params: Promise<{ pr
                       )}
                     </span>
                     <span>
-                      {ex.sets} × {ex.repRange}
+                      {ex.sets} × {ex.minReps}{ex.minReps !== ex.maxReps ? `–${ex.maxReps}` : ""}
+                      {ex.startWeight != null ? ` · ${ex.startWeight} → ${ex.targetWeight ?? "—"} kg` : ""}
                     </span>
                   </li>
                 ))}

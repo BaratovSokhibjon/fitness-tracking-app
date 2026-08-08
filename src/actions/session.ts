@@ -180,6 +180,7 @@ export async function getSessionByScheduleId(scheduleId: string) {
             include: { exercise: true },
             orderBy: { sortOrder: "asc" },
           },
+          program: true,
         },
       },
       session: {

@@ -4,6 +4,8 @@ export const programSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(2000).nullable().optional(),
   durationWeeks: z.number().int().min(1).max(52),
+  progressionType: z.enum(["LINEAR", "EXPONENTIAL"]).optional(),
+  roundTo: z.number().min(0).max(100).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -37,7 +39,10 @@ export const exerciseSchema = z.object({
   workoutId: z.string().cuid(),
   exerciseId: z.string().cuid(),
   sets: z.number().int().min(1).max(20),
-  repRange: z.string().min(1).max(20),
+  minReps: z.number().int().min(1).max(200),
+  maxReps: z.number().int().min(1).max(200),
+  startWeight: z.number().min(0).max(1000).nullable().optional(),
+  targetWeight: z.number().min(0).max(1000).nullable().optional(),
   restTime: z.number().int().min(0).max(600).nullable().optional(),
   notes: z.string().max(1000).nullable().optional(),
   sortOrder: z.number().int().optional(),

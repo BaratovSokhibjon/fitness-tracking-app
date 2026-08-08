@@ -14,7 +14,7 @@ type CalendarDay = {
   id: string;
   date: string;
   status: string;
-  workout: { name: string; exercises: { name: string; sets: number; repRange: string }[] } | null;
+  workout: { name: string; exercises: { name: string; sets: number; minReps: number; maxReps: number }[] } | null;
   session: { duration: number | null } | null;
 };
 
@@ -110,7 +110,7 @@ export function WorkoutCalendar({ initialDate, days }: { initialDate: Date; days
                       <div key={ex.name} className="flex items-center justify-between text-sm">
                         <span>{ex.name}</span>
                         <Badge variant="secondary">
-                          {ex.sets} × {ex.repRange}
+                          {ex.sets} × {ex.minReps}{ex.minReps !== ex.maxReps ? `-${ex.maxReps}` : ""}
                         </Badge>
                       </div>
                     ))}

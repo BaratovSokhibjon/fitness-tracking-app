@@ -8,12 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateProgram, deleteProgram, activateProgram } from "@/actions/program";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { ProgressionType } from "@prisma/client";
 
 type ProgramEditorData = {
   id: string;
   name: string;
   description: string | null;
   durationWeeks: number;
+  progressionType: ProgressionType;
+  roundTo: number;
   isActive: boolean;
 };
 
@@ -22,6 +26,8 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
   const [name, setName] = useState(program.name);
   const [description, setDescription] = useState(program.description ?? "");
   const [durationWeeks, setDurationWeeks] = useState(program.durationWeeks);
+  const [progressionType, setProgressionType] = useState<ProgressionType>(program.progressionType);
+  const [roundTo, setRoundTo] = useState(program.roundTo);
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
@@ -30,6 +36,8 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
       name,
       description,
       durationWeeks,
+      progressionType,
+      roundTo,
       isActive: program.isActive,
     });
     setSaving(false);
@@ -72,6 +80,32 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
             value={durationWeeks}
             onChange={(e) => setDurationWeeks(parseInt(e.target.value) || 1)}
           />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Progression type</Label>
+            <Select value={progressionType} onValueChange={(v) => setProgressionType(v as ProgressionType)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="LINEAR">Linear</SelectItem>
+                <SelectItem value="EXPONENTIAL">Exponential</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="program-round">Weight rounding (kg)</Label>
+            <Input
+              id="program-round"
+              type="number"
+              step={0.5}
+              min={0}
+              max={100}
+              value={roundTo}
+              onChange={(e) => setRoundTo(parseFloat(e.target.value) || 2.5)}
+            />
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleSave} disabled={saving}>

@@ -27,7 +27,8 @@ export default async function CalendarPage() {
           exercises: s.workout.exercises.map((e) => ({
             name: e.exercise.name,
             sets: e.sets,
-            repRange: e.repRange,
+            minReps: e.minReps,
+            maxReps: e.maxReps,
           })),
         }
       : null,

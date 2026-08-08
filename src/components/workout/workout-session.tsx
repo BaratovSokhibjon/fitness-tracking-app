@@ -12,18 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { logSet, startSession, completeSession } from "@/actions/session";
 import { epley1RM } from "@/lib/utils";
 import type { ExerciseHistoryRow } from "@/queries/records";
+import type { WeekSchemeResult } from "@/lib/progression";
 
 type ExerciseType = "WEIGHTED" | "BODYWEIGHT" | "TIMED";
 
-type Exercise = {
+export type Exercise = {
   id: string;
   name: string;
   type: ExerciseType;
   sets: number;
-  repRange: string;
+  minReps: number;
+  maxReps: number;
   restTime: number | null;
   notes: string | null;
   mediaUrl: string | null;
+  scheme: WeekSchemeResult | null;
 };
 
 type Log = {
@@ -72,8 +75,9 @@ export function WorkoutSession({
       const rows: SetState[] = [];
       for (let i = 0; i < ex.sets; i++) {
         const log = existingLogs.find((l) => l.exerciseId === ex.id && l.setNumber === i + 1);
+        const schemeWeight = ex.scheme?.weights?.[i] ?? null;
         rows.push({
-          weight: log?.weight ?? null,
+          weight: log?.weight ?? schemeWeight,
           reps: log?.reps ?? null,
           durationSec: log?.durationSec ?? null,
           rpe: log?.rpe != null ? String(log.rpe) : "",
@@ -282,12 +286,22 @@ export function WorkoutSession({
                   )}
                 </span>
                 <Badge variant="secondary">
-                  {ex.sets} × {ex.repRange}
+                  {ex.sets} × {ex.minReps}{ex.minReps !== ex.maxReps ? `–${ex.maxReps}` : ""}
                   {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
                 </Badge>
               </CardTitle>
               {ex.notes && (
                 <CardDescription className="text-xs">{ex.notes}</CardDescription>
+              )}
+              {ex.scheme && (
+                <CardDescription className="font-mono tabular-nums text-success">
+                  Target: ~{ex.scheme.estimated1RM}kg 1RM ·{" "}
+                  {ex.scheme.sets
+                    ? ex.scheme.sets.reps
+                        .map((r, i) => `${r}×${ex.scheme!.weights[i] ?? "—"}kg`)
+                        .join(" · ")
+                    : `${ex.scheme.targetReps} reps @ ${Math.round(ex.scheme.targetIntensity)}%`}
+                </CardDescription>
               )}
             </CardHeader>
             <CardContent>

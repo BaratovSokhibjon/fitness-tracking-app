@@ -35,13 +35,15 @@ model Profile {
 // ─── Program & Workout Templates ────────────────────────
 
 model Program {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?  @db.Text
-  durationWeeks Int      @default(8)
-  isActive      Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String           @id @default(cuid())
+  name            String
+  description     String?          @db.Text
+  durationWeeks   Int              @default(8)
+  isActive        Boolean          @default(false)
+  progressionType ProgressionType  @default(LINEAR)
+  roundTo         Float            @default(2.5)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   workouts Workout[]
 }
@@ -86,16 +88,19 @@ model ExerciseLibrary {
 }
 
 model WorkoutExercise {
-  id         String   @id @default(cuid())
-  workoutId  String
-  exerciseId String
-  sets       Int
-  repRange   String
-  restTime   Int?
-  notes      String?  @db.Text
-  sortOrder  Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(cuid())
+  workoutId    String
+  exerciseId   String
+  sets         Int
+  minReps      Int
+  maxReps      Int
+  startWeight  Float?
+  targetWeight Float?
+  restTime     Int?
+  notes        String?  @db.Text
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   workout      Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   exercise     ExerciseLibrary @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
@@ -109,6 +114,11 @@ enum ExerciseType {
   WEIGHTED
   BODYWEIGHT
   TIMED
+}
+
+enum ProgressionType {
+  LINEAR
+  EXPONENTIAL
 }
 
 // ─── Workout Calendar ───────────────────────────────────

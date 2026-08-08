@@ -45,10 +45,18 @@ export type ExerciseFormData = {
   name: string;
   type: ExerciseType;
   sets: number;
-  repRange: string;
+  minReps: number;
+  maxReps: number;
+  startWeight: number | null;
+  targetWeight: number | null;
   restTime: number | null;
   notes: string | null;
 };
+
+function repLabel(type: ExerciseType, minReps: number, maxReps: number): string {
+  if (minReps === maxReps) return `${minReps}${type === "TIMED" ? "s" : ""}`;
+  return `${minReps}–${maxReps}${type === "TIMED" ? "s" : ""}`;
+}
 
 export function WorkoutForm({
   workout,
@@ -80,7 +88,10 @@ export function WorkoutForm({
   const [creating, setCreating] = useState(false);
   const [newLib, setNewLib] = useState({ name: "", type: "WEIGHTED", muscleGroup: "", equipment: "" });
   const [sets, setSets] = useState("3");
-  const [repRange, setRepRange] = useState("10-12");
+  const [minReps, setMinReps] = useState("8");
+  const [maxReps, setMaxReps] = useState("12");
+  const [startWeight, setStartWeight] = useState("");
+  const [targetWeight, setTargetWeight] = useState("");
   const [restTime, setRestTime] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -123,7 +134,10 @@ export function WorkoutForm({
           workoutId: created.id,
           exerciseId: ex.exerciseId,
           sets: ex.sets,
-          repRange: ex.repRange,
+          minReps: ex.minReps,
+          maxReps: ex.maxReps,
+          startWeight: ex.startWeight,
+          targetWeight: ex.targetWeight,
           restTime: ex.restTime,
           notes: ex.notes,
         });
@@ -140,7 +154,10 @@ export function WorkoutForm({
       name: picked.name,
       type: picked.type,
       sets: parseInt(sets, 10) || 3,
-      repRange,
+      minReps: parseInt(minReps, 10) || 1,
+      maxReps: parseInt(maxReps, 10) || 1,
+      startWeight: startWeight ? parseFloat(startWeight) : null,
+      targetWeight: targetWeight ? parseFloat(targetWeight) : null,
       restTime: restTime ? parseInt(restTime, 10) : null,
       notes: notes || null,
     };
@@ -158,7 +175,10 @@ export function WorkoutForm({
     setQuery("");
     setResults([]);
     setSets("3");
-    setRepRange("10-12");
+    setMinReps("8");
+    setMaxReps("12");
+    setStartWeight("");
+    setTargetWeight("");
     setRestTime("");
     setNotes("");
     setCreating(false);
@@ -248,8 +268,9 @@ export function WorkoutForm({
                       </span>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {ex.sets} sets · {ex.repRange} {ex.type === "TIMED" ? "per set" : "reps"}
+                      {ex.sets} sets · {repLabel(ex.type, ex.minReps, ex.maxReps)} {ex.type === "TIMED" ? "per set" : "reps"}
                       {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
+                      {ex.startWeight != null && ` · ${ex.startWeight} → ${ex.targetWeight ?? "—"} kg`}
                     </p>
                     {ex.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{ex.notes}</p>}
                   </div>
@@ -363,23 +384,41 @@ export function WorkoutForm({
             )}
 
             {picked && (
-              <div className="grid gap-3 border-t pt-3 sm:grid-cols-[5rem_1fr_5rem_auto] sm:items-end">
-                <div className="space-y-1.5">
-                  <Label htmlFor="ex-sets">Sets</Label>
-                  <Input id="ex-sets" inputMode="numeric" value={sets} onChange={(e) => setSets(e.target.value)} />
+              <>
+                <div className="grid gap-3 border-t pt-3 sm:grid-cols-[5rem_5rem_5rem_auto] sm:items-end">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ex-sets">Sets</Label>
+                    <Input id="ex-sets" inputMode="numeric" value={sets} onChange={(e) => setSets(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ex-min">{picked.type === "TIMED" ? "Min s" : "Min reps"}</Label>
+                    <Input id="ex-min" inputMode="numeric" value={minReps} onChange={(e) => setMinReps(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ex-max">{picked.type === "TIMED" ? "Max s" : "Max reps"}</Label>
+                    <Input id="ex-max" inputMode="numeric" value={maxReps} onChange={(e) => setMaxReps(e.target.value)} />
+                  </div>
+                  <Button onClick={handleAddExercise} disabled={!picked}>
+                    Add
+                  </Button>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="ex-reps">{picked.type === "TIMED" ? "Time target" : "Rep target"}</Label>
-                  <Input id="ex-reps" value={repRange} onChange={(e) => setRepRange(e.target.value)} placeholder={picked.type === "TIMED" ? "30-60s" : "10-12"} />
-                </div>
+                {picked.type === "WEIGHTED" && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ex-start-weight">Start weight (kg)</Label>
+                      <Input id="ex-start-weight" inputMode="decimal" value={startWeight} onChange={(e) => setStartWeight(e.target.value)} placeholder="80" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="ex-target-weight">Target weight (kg)</Label>
+                      <Input id="ex-target-weight" inputMode="decimal" value={targetWeight} onChange={(e) => setTargetWeight(e.target.value)} placeholder="90" />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="ex-rest">Rest (s)</Label>
                   <Input id="ex-rest" inputMode="numeric" value={restTime} onChange={(e) => setRestTime(e.target.value)} placeholder="90" />
                 </div>
-                <Button onClick={handleAddExercise} disabled={!picked}>
-                  Add
-                </Button>
-              </div>
+              </>
             )}
 
             <div className="grid gap-3 sm:grid-cols-1">
