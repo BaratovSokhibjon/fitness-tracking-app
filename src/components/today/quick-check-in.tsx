@@ -28,10 +28,6 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
   const [sleep, setSleep] = useState<number | null>(initial.sleepHours ?? null);
   const [energy, setEnergy] = useState(initial.energy ?? 5);
   const [mood, setMood] = useState(initial.mood ?? 5);
-  const [calories, setCalories] = useState<number | null>(initial.calories ?? null);
-  const [protein, setProtein] = useState<number | null>(initial.protein ?? null);
-  const [carbs, setCarbs] = useState<number | null>(initial.carbs ?? null);
-  const [fat, setFat] = useState<number | null>(initial.fat ?? null);
   const [notes, setNotes] = useState(initial.notes);
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -71,10 +67,6 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
         sleepHours: sleep,
         energy,
         mood,
-        calories,
-        protein,
-        carbs,
-        fat,
         notes,
       })
     );
@@ -144,30 +136,33 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
           onClick={() => setExpanded((v) => !v)}
           className="flex w-full items-center justify-between rounded-none border px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
         >
-          <span>Nutrition, activity & notes</span>
+          <span>Nutrition (auto-calculated) & notes</span>
           <CaretDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
         </button>
 
         {expanded && (
           <div className="space-y-4 border-t pt-4">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="cal">Calories</Label>
-                <NumberInput id="cal" value={calories} onValueChange={setCalories} onCommit={() => saveExtended()} min={0} step={10} decimals={0} aria-label="Calories" />
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="rounded-none border px-2 py-1.5">
+                <p className="text-sm font-semibold">{initial.calories ?? "—"}</p>
+                <p className="text-xs text-muted-foreground">kcal</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="protein">Protein (g)</Label>
-                <NumberInput id="protein" value={protein} onValueChange={setProtein} onCommit={() => saveExtended()} min={0} step={5} decimals={0} aria-label="Protein" />
+              <div className="rounded-none border px-2 py-1.5">
+                <p className="text-sm font-semibold">{initial.protein != null ? `${Math.round(initial.protein)}g` : "—"}</p>
+                <p className="text-xs text-muted-foreground">protein</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="carbs">Carbs (g)</Label>
-                <NumberInput id="carbs" value={carbs} onValueChange={setCarbs} onCommit={() => saveExtended()} min={0} step={5} decimals={0} aria-label="Carbs" />
+              <div className="rounded-none border px-2 py-1.5">
+                <p className="text-sm font-semibold">{initial.carbs != null ? `${Math.round(initial.carbs)}g` : "—"}</p>
+                <p className="text-xs text-muted-foreground">carbs</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="fat">Fat (g)</Label>
-                <NumberInput id="fat" value={fat} onValueChange={setFat} onCommit={() => saveExtended()} min={0} step={5} decimals={0} aria-label="Fat" />
+              <div className="rounded-none border px-2 py-1.5">
+                <p className="text-sm font-semibold">{initial.fat != null ? `${Math.round(initial.fat)}g` : "—"}</p>
+                <p className="text-xs text-muted-foreground">fat</p>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Totals are calculated from your logged foods. Use the Meal Log below to add what you ate.
+            </p>
             <div className="space-y-1.5">
               <Label htmlFor="notes">Notes</Label>
               <Textarea
