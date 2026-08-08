@@ -23,7 +23,7 @@ export default async function ProgressPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Progress</h1>
+        <h1 className="text-3xl font-medium text-ink">Progress</h1>
         <p className="text-sm text-muted-foreground">Body measurements over time.</p>
       </div>
 

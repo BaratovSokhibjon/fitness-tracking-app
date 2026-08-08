@@ -35,7 +35,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">History</h1>
+      <h1 className="text-3xl font-medium text-ink">History</h1>
       <p className="text-sm text-muted-foreground">Last 30 days of check-in trends.</p>
 
       <TrendLineChart title="Weight Trend" description="Morning weight (kg)" data={weightData} unit=" kg" color="#111111" />

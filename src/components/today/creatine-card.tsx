@@ -67,7 +67,7 @@ export function CreatineCard({
         <Progress value={progressValue} />
         <p className="text-sm leading-6 text-mute">{phaseBlurb}</p>
 
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between font-mono text-sm tabular-nums">
           <span className="text-mute">
             {data.streak} day streak
             {data.phase === "MAINTENANCE" ? " · saturated" : ` · ~${saturationDays} days to saturate`}

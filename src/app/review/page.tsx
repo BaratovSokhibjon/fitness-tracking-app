@@ -19,7 +19,7 @@ export default async function ReviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Weekly Review</h1>
+        <h1 className="text-3xl font-medium text-ink">Weekly Review</h1>
         <p className="text-sm text-muted-foreground">
           Week {weekNumber} · {format(review.weekStart, "MMM d")} – {format(review.weekEnd, "MMM d")}
         </p>
@@ -30,23 +30,23 @@ export default async function ReviewPage() {
           <CardHeader className="pb-2">
             <CardDescription>Avg weight</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
-            {review.stats.avgWeight ?? "—"} <span className="text-sm font-normal text-muted-foreground">kg</span>
+          <CardContent className="font-mono text-2xl font-semibold tabular-nums">
+            {review.stats.avgWeight ?? "—"} <span className="font-normal text-muted-foreground">kg</span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Avg sleep</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
-            {review.stats.avgSleep ?? "—"} <span className="text-sm font-normal text-muted-foreground">h</span>
+          <CardContent className="font-mono text-2xl font-semibold tabular-nums">
+            {review.stats.avgSleep ?? "—"} <span className="font-normal text-muted-foreground">h</span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Avg energy / mood</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
+          <CardContent className="font-mono text-2xl font-semibold tabular-nums">
             {review.stats.avgEnergy ?? "—"} / {review.stats.avgMood ?? "—"}
           </CardContent>
         </Card>
@@ -76,11 +76,11 @@ export default async function ReviewPage() {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="flex items-center justify-between border rounded-none px-3 py-2 text-sm">
             <span className="text-muted-foreground">Calories</span>
-            <span className="font-medium">{review.stats.avgCalories} kcal</span>
+            <span className="font-mono font-medium tabular-nums">{review.stats.avgCalories} kcal</span>
           </div>
           <div className="flex items-center justify-between border rounded-none px-3 py-2 text-sm">
             <span className="text-muted-foreground">Protein</span>
-            <span className="font-medium">{review.stats.avgProtein} g</span>
+            <span className="font-mono font-medium tabular-nums">{review.stats.avgProtein} g</span>
           </div>
         </CardContent>
       </Card>

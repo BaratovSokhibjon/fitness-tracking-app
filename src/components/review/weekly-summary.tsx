@@ -43,7 +43,7 @@ export function WeeklySummary({
             habits.map((h) => (
               <div key={h.name} className="flex items-center justify-between text-sm">
                 <span>{h.name}</span>
-                <span className="text-muted-foreground">
+                <span className="font-mono tabular-nums text-muted-foreground">
                   {h.completedDays}/{h.totalDays || 7} days
                 </span>
               </div>
@@ -64,7 +64,7 @@ export function WeeklySummary({
               {sessions.map((s) => (
                 <li key={s.id} className="flex items-center justify-between text-sm">
                   <span className="font-medium">{s.workoutName}</span>
-                  <span className="text-muted-foreground">
+                  <span className="font-mono tabular-nums text-muted-foreground">
                     {format(new Date(s.date), "EEE MMM d")} · {s.setCount} sets
                     {s.duration ? ` · ${s.duration} min` : ""}
                   </span>

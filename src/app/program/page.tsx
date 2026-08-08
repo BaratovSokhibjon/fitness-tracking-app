@@ -14,7 +14,7 @@ export default async function ProgramPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Program</h1>
+          <h1 className="text-3xl font-medium text-ink">Program</h1>
           <p className="text-sm text-muted-foreground">Your workout templates and schedule.</p>
         </div>
         <Button asChild>

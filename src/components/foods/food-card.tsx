@@ -166,10 +166,10 @@ export function FoodCard({ food }: { food: FoodData }) {
               <span className="truncate">{food.name}</span>
               <Badge variant="secondary">{categoryLabels[food.category]}</Badge>
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="font-mono text-xs tabular-nums text-muted-foreground">
               {food.servingSize} {food.servingUnit} · {food.caloriesPerServing} kcal
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
               P {food.proteinPerServing} · C {food.carbsPerServing} · F {food.fatPerServing} g
             </p>
           </div>

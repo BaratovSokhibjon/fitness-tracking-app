@@ -154,19 +154,19 @@ export function FoodLogSection({ date }: { date: string }) {
       <CardContent className="space-y-3">
         <div className="grid grid-cols-4 gap-2 text-center">
           <div className="rounded-none border px-2 py-1.5">
-            <p className="text-sm font-semibold">{totals.calories}</p>
+            <p className="font-mono text-sm font-semibold tabular-nums">{totals.calories}</p>
             <p className="text-xs text-muted-foreground">kcal</p>
           </div>
           <div className="rounded-none border px-2 py-1.5">
-            <p className="text-sm font-semibold">{Math.round(totals.protein)}g</p>
+            <p className="font-mono text-sm font-semibold tabular-nums">{Math.round(totals.protein)}g</p>
             <p className="text-xs text-muted-foreground">protein</p>
           </div>
           <div className="rounded-none border px-2 py-1.5">
-            <p className="text-sm font-semibold">{Math.round(totals.carbs)}g</p>
+            <p className="font-mono text-sm font-semibold tabular-nums">{Math.round(totals.carbs)}g</p>
             <p className="text-xs text-muted-foreground">carbs</p>
           </div>
           <div className="rounded-none border px-2 py-1.5">
-            <p className="text-sm font-semibold">{Math.round(totals.fat)}g</p>
+            <p className="font-mono text-sm font-semibold tabular-nums">{Math.round(totals.fat)}g</p>
             <p className="text-xs text-muted-foreground">fat</p>
           </div>
         </div>

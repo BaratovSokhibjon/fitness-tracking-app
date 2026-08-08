@@ -20,7 +20,7 @@ export default async function ReviewWeekPage({ params }: { params: Promise<{ wee
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Week {weekNumber} Review</h1>
+          <h1 className="text-3xl font-medium text-ink">Week {weekNumber} Review</h1>
           <p className="text-sm text-muted-foreground">
             {format(review.weekStart, "MMM d")} – {format(review.weekEnd, "MMM d")}
           </p>
@@ -35,23 +35,23 @@ export default async function ReviewWeekPage({ params }: { params: Promise<{ wee
           <CardHeader className="pb-2">
             <CardDescription>Avg weight</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
-            {review.stats.avgWeight ?? "—"} <span className="text-sm font-normal text-muted-foreground">kg</span>
+          <CardContent className="font-mono text-2xl font-semibold tabular-nums">
+            {review.stats.avgWeight ?? "—"} <span className="font-normal text-muted-foreground">kg</span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Avg sleep</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
-            {review.stats.avgSleep ?? "—"} <span className="text-sm font-normal text-muted-foreground">h</span>
+          <CardContent className="font-mono text-2xl font-semibold tabular-nums">
+            {review.stats.avgSleep ?? "—"} <span className="font-normal text-muted-foreground">h</span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Workouts</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
+          <CardContent className="font-mono text-2xl font-semibold tabular-nums">
             {review.stats.completedWorkouts}/{review.stats.totalWorkouts}
             <Badge variant="secondary" className="ml-2 text-sm">{review.stats.completionRate}%</Badge>
           </CardContent>

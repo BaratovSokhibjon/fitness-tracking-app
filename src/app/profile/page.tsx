@@ -11,7 +11,7 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Profile</h1>
+        <h1 className="text-3xl font-medium text-ink">Profile</h1>
         <p className="text-sm text-muted-foreground">Targets, baselines, and program settings.</p>
       </div>
       <ProfileForm

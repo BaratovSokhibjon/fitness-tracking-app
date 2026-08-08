@@ -42,7 +42,7 @@ export function WorkoutCalendar({ initialDate, days }: { initialDate: Date; days
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">{format(month, "MMMM yyyy")}</h1>
+        <h1 className="text-3xl font-medium text-ink">{format(month, "MMMM yyyy")}</h1>
         <div className="flex gap-1">
           <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))}>
             <CaretLeft className="h-4 w-4" />

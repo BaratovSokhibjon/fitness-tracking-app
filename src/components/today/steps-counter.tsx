@@ -29,7 +29,7 @@ export function StepsCounter({ date, steps, target }: { date: string; steps: num
           <Footprints className="h-5 w-5 text-success" />
           Steps
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="font-mono font-medium tabular-nums">
           {stepsNum.toLocaleString()} / {target.toLocaleString()}
         </CardDescription>
       </CardHeader>

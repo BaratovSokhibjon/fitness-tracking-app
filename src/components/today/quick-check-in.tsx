@@ -125,7 +125,7 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Mood</Label>
-              <span className="text-sm font-medium text-primary">{mood}/10</span>
+              <span className="font-mono text-sm font-medium tabular-nums text-primary">{mood}/10</span>
             </div>
             <Slider min={1} max={10} step={1} value={[mood]} onValueChange={(v) => setMood(v[0])} onValueCommit={() => saveQuick()} />
           </div>
@@ -144,19 +144,19 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
           <div className="space-y-4 border-t pt-4">
             <div className="grid grid-cols-4 gap-2 text-center">
               <div className="rounded-none border px-2 py-1.5">
-                <p className="text-sm font-semibold">{initial.calories ?? "—"}</p>
+                <p className="font-mono text-sm font-semibold tabular-nums">{initial.calories ?? "—"}</p>
                 <p className="text-xs text-muted-foreground">kcal</p>
               </div>
               <div className="rounded-none border px-2 py-1.5">
-                <p className="text-sm font-semibold">{initial.protein != null ? `${Math.round(initial.protein)}g` : "—"}</p>
+                <p className="font-mono text-sm font-semibold tabular-nums">{initial.protein != null ? `${Math.round(initial.protein)}g` : "—"}</p>
                 <p className="text-xs text-muted-foreground">protein</p>
               </div>
               <div className="rounded-none border px-2 py-1.5">
-                <p className="text-sm font-semibold">{initial.carbs != null ? `${Math.round(initial.carbs)}g` : "—"}</p>
+                <p className="font-mono text-sm font-semibold tabular-nums">{initial.carbs != null ? `${Math.round(initial.carbs)}g` : "—"}</p>
                 <p className="text-xs text-muted-foreground">carbs</p>
               </div>
               <div className="rounded-none border px-2 py-1.5">
-                <p className="text-sm font-semibold">{initial.fat != null ? `${Math.round(initial.fat)}g` : "—"}</p>
+                <p className="font-mono text-sm font-semibold tabular-nums">{initial.fat != null ? `${Math.round(initial.fat)}g` : "—"}</p>
                 <p className="text-xs text-muted-foreground">fat</p>
               </div>
             </div>

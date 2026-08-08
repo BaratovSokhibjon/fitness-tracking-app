@@ -12,7 +12,7 @@ export default async function GoalsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-medium uppercase tracking-wide text-ink">Goals</h1>
+          <h1 className="text-3xl font-medium text-ink">Goals</h1>
           <p className="text-sm text-muted-foreground">Track your targets.</p>
         </div>
         <NewGoalDialog />

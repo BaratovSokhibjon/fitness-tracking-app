@@ -130,7 +130,7 @@ export function GoalCard({ goal }: { goal: GoalData }) {
             {goal.name}
             <Badge variant="secondary">{goal.type}</Badge>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="font-mono tabular-nums">
             {goal.currentValue} / {goal.targetValue} {goal.unit}
           </CardDescription>
         </div>
@@ -155,7 +155,7 @@ export function GoalCard({ goal }: { goal: GoalData }) {
       </CardHeader>
       <CardContent>
         <Progress value={percent(goal.currentValue, goal.targetValue)} />
-        <p className="mt-1 text-right text-xs text-muted-foreground">{Math.round(pct)}% complete</p>
+        <p className="mt-1 text-right font-mono text-xs tabular-nums text-muted-foreground">{Math.round(pct)}% complete</p>
       </CardContent>
     </Card>
   );

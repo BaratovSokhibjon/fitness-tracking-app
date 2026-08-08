@@ -26,7 +26,7 @@ export function WaterCounter({ date, water, target }: { date: string; water: num
           <Drop className="h-5 w-5 text-info" />
           Water
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="font-mono font-medium tabular-nums">
           {litres}L / {targetLitres}L
         </CardDescription>
       </CardHeader>
