@@ -31,7 +31,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden h-dvh w-56 shrink-0 flex-col overflow-hidden border-r border-hairline bg-canvas md:flex">
+    <aside className="hidden sticky top-0 h-dvh w-56 shrink-0 flex-col overflow-hidden border-r border-hairline bg-canvas md:flex">
       <div className="flex h-14 shrink-0 items-center gap-2 border-b border-hairline px-4">
         <Barbell className="h-5 w-5 text-ink" />
         <span className="text-sm font-medium uppercase tracking-wider text-ink">Somatix</span>

@@ -10,7 +10,7 @@ datasource db {
 // ─── Profile ────────────────────────────────────────────
 
 model Profile {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   age                 Int?
   height              Float?
   programStartDate    DateTime?
@@ -21,35 +21,42 @@ model Profile {
   dailyWaterTarget    Int?
   dailyStepsTarget    Int?
   sleepTarget         Float?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  creatineEnabled         Boolean          @default(false)
+  creatineProtocol        CreatineProtocol @default(MAINTENANCE_ONLY)
+  creatineStartDate       DateTime?
+  creatineLoadingDays     Int              @default(7)
+  creatineLoadingDose     Float            @default(20)
+  creatineMaintenanceDose Float            @default(5)
 }
 
 // ─── Program & Workout Templates ────────────────────────
 
 model Program {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  description   String?   @db.Text
-  durationWeeks Int       @default(8)
-  isActive      Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  description   String?  @db.Text
+  durationWeeks Int      @default(8)
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   workouts Workout[]
 }
 
 model Workout {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   programId String
   name      String
   dayOfWeek Int
-  notes     String? @db.Text
-  sortOrder Int     @default(0)
+  notes     String?  @db.Text
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  program   Program     @relation(fields: [programId], references: [id], onDelete: Cascade)
+  program   Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
   exercises WorkoutExercise[]
   schedules WorkoutSchedule[]
   sessions  WorkoutSession[]
@@ -79,18 +86,18 @@ model ExerciseLibrary {
 }
 
 model WorkoutExercise {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   workoutId  String
   exerciseId String
   sets       Int
   repRange   String
   restTime   Int?
-  notes      String? @db.Text
-  sortOrder  Int     @default(0)
+  notes      String?  @db.Text
+  sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  workout      Workout        @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  workout      Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   exercise     ExerciseLibrary @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   exerciseLogs ExerciseLog[]
 
@@ -114,7 +121,7 @@ model WorkoutSchedule {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  workout Workout?         @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+  workout Workout?        @relation(fields: [workoutId], references: [id], onDelete: SetNull)
   session WorkoutSession?
 
   @@unique([date])
@@ -130,16 +137,16 @@ enum ScheduleStatus {
 // ─── Workout Execution Log ──────────────────────────────
 
 model WorkoutSession {
-  id         String   @id @default(cuid())
-  scheduleId String   @unique
+  id         String    @id @default(cuid())
+  scheduleId String    @unique
   workoutId  String
   date       DateTime
   startedAt  DateTime?
   finishedAt DateTime?
   duration   Int?
-  notes      String?  @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  notes      String?   @db.Text
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   schedule     WorkoutSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   workout      Workout         @relation(fields: [workoutId], references: [id], onDelete: Restrict)
@@ -147,16 +154,16 @@ model WorkoutSession {
 }
 
 model ExerciseLog {
-  id         String  @id @default(cuid())
-  sessionId  String
-  exerciseId String
-  setNumber  Int
-  weight     Float?
-  reps       Int?
+  id          String   @id @default(cuid())
+  sessionId   String
+  exerciseId  String
+  setNumber   Int
+  weight      Float?
+  reps        Int?
   durationSec Int?
-  rpe        Float?
-  notes      String? @db.Text
-  createdAt  DateTime @default(now())
+  rpe         Float?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
 
   session  WorkoutSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   exercise WorkoutExercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
@@ -320,4 +327,20 @@ enum GoalType {
   SLEEP
   STEPS
   OTHER
+}
+
+// ─── Creatine Intake ────────────────────────────────────
+
+model CreatineLog {
+  id        String   @id @default(cuid())
+  date      DateTime
+  doseGrams Float
+  createdAt DateTime @default(now())
+
+  @@unique([date])
+}
+
+enum CreatineProtocol {
+  LOADING
+  MAINTENANCE_ONLY
 }

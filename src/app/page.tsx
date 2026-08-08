@@ -5,8 +5,10 @@ import { QuickCheckIn } from "@/components/today/quick-check-in";
 import { HabitGrid } from "@/components/today/habit-grid";
 import { WaterCounter } from "@/components/today/water-counter";
 import { StepsCounter } from "@/components/today/steps-counter";
+import { CreatineCard } from "@/components/today/creatine-card";
 import { PostWorkoutPrompt } from "@/components/today/post-workout-prompt";
 import { FoodLogSection } from "@/components/today/food-log";
+import { getCreatineSaturationDays } from "@/lib/creatine";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +70,17 @@ export default async function TodayPage() {
           target={data.profile?.dailyStepsTarget ?? 10000}
         />
       </div>
+
+      {data.creatine && (
+        <CreatineCard
+          date={new Date().toISOString()}
+          data={data.creatine}
+          saturationDays={getCreatineSaturationDays(
+            data.profile?.creatineProtocol ?? "MAINTENANCE_ONLY",
+            data.profile?.creatineLoadingDays ?? 7
+          )}
+        />
+      )}
     </div>
   );
 }

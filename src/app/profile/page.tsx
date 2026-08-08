@@ -1,10 +1,12 @@
 import { getProfile } from "@/actions/profile";
+import { getCreatineConfig } from "@/actions/creatine";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { CreatineForm } from "@/components/profile/creatine-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  const profile = await getProfile();
+  const [profile, creatineConfig] = await Promise.all([getProfile(), getCreatineConfig()]);
 
   return (
     <div className="space-y-6">
@@ -26,6 +28,21 @@ export default async function ProfilePage() {
                 dailyWaterTarget: profile.dailyWaterTarget,
                 dailyStepsTarget: profile.dailyStepsTarget,
                 sleepTarget: profile.sleepTarget,
+              }
+            : null
+        }
+      />
+
+      <CreatineForm
+        config={
+          creatineConfig
+            ? {
+                enabled: creatineConfig.enabled,
+                protocol: creatineConfig.protocol,
+                startDate: creatineConfig.startDate?.toISOString() ?? null,
+                loadingDays: creatineConfig.loadingDays,
+                loadingDose: creatineConfig.loadingDose,
+                maintenanceDose: creatineConfig.maintenanceDose,
               }
             : null
         }
