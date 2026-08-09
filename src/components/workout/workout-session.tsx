@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Timer } from "@phosphor-icons/react";
+import { CheckCircle, Timer } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { logSet, startSession, completeSession } from "@/actions/session";
 import { epley1RM } from "@/lib/utils";
 import type { ExerciseHistoryRow } from "@/queries/records";
 import type { WeekSchemeResult } from "@/lib/progression";
+import { computeWarmupSets, compareSession, type SessionComparison } from "@/lib/progression";
 
 type ExerciseType = "WEIGHTED" | "BODYWEIGHT" | "TIMED";
 
@@ -63,6 +64,7 @@ export function WorkoutSession({
   const [elapsed, setElapsed] = useState(0);
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
+  const [summary, setSummary] = useState<SessionComparison[] | null>(null);
 
   // Rest timer state
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
@@ -226,10 +228,10 @@ export function WorkoutSession({
       });
     }
 
+    const comparison = compareSession(sets, exercises);
     setCompleted(true);
+    setSummary(comparison);
     setSaving(false);
-    router.push("/");
-    router.refresh();
   }
 
   return (
@@ -245,6 +247,37 @@ export function WorkoutSession({
           {completed && <Badge variant="success">Completed</Badge>}
         </CardHeader>
       </Card>
+
+      {summary && (
+        <Card className="border-success/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-success">
+              <CheckCircle className="h-5 w-5" />
+              Workout complete
+            </CardTitle>
+            <CardDescription>
+              Completed in {formatElapsed(elapsed)} · {summary.reduce((s, x) => s + (x.onTarget ? 1 : 0), 0)}/{summary.length} exercises on target
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-1.5">
+              {summary.map((row) => (
+                <li key={row.exerciseName} className="flex items-center justify-between rounded-none border px-3 py-2 text-sm">
+                  <span className="font-medium">{row.exerciseName}</span>
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {row.completedSets}/{row.targetSets} sets
+                    {row.actualAvgWeight != null && ` · avg ${row.actualAvgWeight.toFixed(1)}kg`}
+                    {row.actualAvgIntensity != null && ` · ${Math.round(row.actualAvgIntensity)}%`}
+                    <span className={row.onTarget ? "ml-2 text-success" : "ml-2 text-mute"}>
+                      {row.onTarget ? "on target" : "off target"}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {restSeconds !== null && (
         <Card className={restSeconds === 0 ? "border-emerald-300 bg-emerald-50/50" : "border-primary/40"}>
@@ -305,6 +338,18 @@ export function WorkoutSession({
               )}
             </CardHeader>
             <CardContent>
+              {ex.type === "WEIGHTED" && ex.scheme?.weights?.[0] != null && (() => {
+                const warmups = computeWarmupSets(ex.scheme!.weights[0], 2.5);
+                if (warmups.length === 0) return null;
+                return (
+                  <div className="mb-3 rounded-none border border-dashed border-hairline px-3 py-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-mute">Warm-up</p>
+                    <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
+                      {warmups.map((w) => `${w.reps} × ${w.weight}kg`).join("  ·  ")}
+                    </p>
+                  </div>
+                );
+              })()}
               <div
                 className={
                   ex.type === "WEIGHTED"
@@ -412,8 +457,8 @@ export function WorkoutSession({
     })}
 
       <div className="flex justify-end">
-        <Button size="lg" onClick={handleComplete} disabled={saving || completed}>
-          {completed ? "Completed" : saving ? "Saving…" : "Complete Workout"}
+        <Button size="lg" onClick={completed ? () => { router.push("/"); router.refresh(); } : handleComplete} disabled={saving}>
+          {saving ? "Saving…" : completed ? "Done" : "Complete Workout"}
         </Button>
       </div>
     </div>

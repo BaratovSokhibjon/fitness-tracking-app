@@ -137,3 +137,81 @@ export async function getPersonalRecords() {
   records.sort((a, b) => (b.bestEstimated1RM ?? b.maxWeight ?? b.maxDurationSec ?? 0) - (a.bestEstimated1RM ?? a.maxWeight ?? a.maxDurationSec ?? 0));
   return records;
 }
+
+export type ExerciseTrend = {
+  exerciseId: string;
+  name: string;
+  type: string;
+  points: { date: Date; estimated1RM: number | null; maxWeight: number | null }[];
+};
+
+export async function getExercise1RMTrends(limit = 20) {
+  const activeProgram = await prisma.program.findFirst({
+    where: { isActive: true },
+    include: {
+      workouts: {
+        include: {
+          exercises: { include: { exercise: true }, orderBy: { sortOrder: "asc" } },
+        },
+        orderBy: { dayOfWeek: "asc" },
+      },
+    },
+  });
+
+  // Exercises from the active program (or all exercises with logs if none active)
+  const exerciseIds = activeProgram
+    ? activeProgram.workouts.flatMap((w) => w.exercises.map((e) => e.exerciseId))
+    : [];
+
+  const logs = await prisma.exerciseLog.findMany({
+    where: exerciseIds.length > 0 ? { exerciseId: { in: exerciseIds } } : {},
+    include: {
+      exercise: { include: { exercise: { select: { name: true, type: true } } } },
+      session: { select: { date: true, id: true } },
+    },
+    orderBy: [{ session: { date: "asc" } }, { setNumber: "asc" }],
+    take: limit * 30,
+  });
+
+  // Group by exerciseId, then by session date, computing max 1RM per session.
+  const byExercise = new Map<string, Map<string, { date: Date; max1RM: number | null; maxWeight: number | null }>>();
+  const meta = new Map<string, { name: string; type: string }>();
+
+  for (const log of logs) {
+    const exId = log.exerciseId;
+    const exName = log.exercise.exercise.name;
+    const exType = log.exercise.exercise.type;
+    meta.set(exId, { name: exName, type: exType });
+
+    if (!byExercise.has(exId)) byExercise.set(exId, new Map());
+    const sessions = byExercise.get(exId)!;
+    const dateKey = log.session.date.toISOString();
+    if (!sessions.has(dateKey)) {
+      sessions.set(dateKey, { date: log.session.date, max1RM: null, maxWeight: null });
+    }
+    const entry = sessions.get(dateKey)!;
+    const rm = log.reps != null ? epley1RM(log.weight, log.reps) : null;
+    if (rm != null && (entry.max1RM == null || rm > entry.max1RM)) entry.max1RM = rm;
+    if (log.weight != null && log.weight > 0 && (entry.maxWeight == null || log.weight > entry.maxWeight)) {
+      entry.maxWeight = log.weight;
+    }
+  }
+
+  const trends: ExerciseTrend[] = [];
+  for (const [exId, sessionsMap] of byExercise.entries()) {
+    const sessions = Array.from(sessionsMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+    trends.push({
+      exerciseId: exId,
+      name: meta.get(exId)!.name,
+      type: meta.get(exId)!.type,
+      points: sessions.map((s) => ({
+        date: s.date,
+        estimated1RM: s.max1RM,
+        maxWeight: s.maxWeight,
+      })),
+    });
+  }
+
+  trends.sort((a, b) => a.name.localeCompare(b.name));
+  return trends;
+}

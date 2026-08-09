@@ -221,3 +221,92 @@ export function compute1RM(weight: number, reps: number): number {
   if (weight <= 0 || reps <= 0) return 0;
   return Math.round(weight * (1 + reps / 30) * 10) / 10;
 }
+
+export interface WarmupSet {
+  weight: number;
+  reps: string;
+  percentage: number;
+}
+
+export function computeWarmupSets(workingWeight: number, roundTo: number): WarmupSet[] {
+  if (workingWeight <= 0) return [];
+  const steps: { percentage: number; reps: string }[] = [
+    { percentage: 0.4, reps: "8-10" },
+    { percentage: 0.6, reps: "5-6" },
+    { percentage: 0.8, reps: "2-3" },
+  ];
+  const sets: WarmupSet[] = [];
+  for (const step of steps) {
+    const weight = roundToNearest(workingWeight * step.percentage, roundTo);
+    if (weight <= 0) continue;
+    sets.push({ weight, reps: step.reps, percentage: step.percentage });
+  }
+  return sets;
+}
+
+export interface SessionComparison {
+  exerciseName: string;
+  type: string;
+  targetSets: number;
+  completedSets: number;
+  setsComplete: boolean;
+  targetWeight: number | null;
+  actualAvgWeight: number | null;
+  targetIntensity: number | null;
+  actualAvgIntensity: number | null;
+  onTarget: boolean;
+}
+
+export function compareSession(
+  logged: Record<string, { weight: number | null; reps: number | null; durationSec: number | null }[]>,
+  exercises: {
+    id: string;
+    name: string;
+    type: string;
+    sets: number;
+    scheme: WeekSchemeResult | null;
+  }[],
+): SessionComparison[] {
+  return exercises.map((ex) => {
+    const rows = logged[ex.id] ?? [];
+    const filled = rows.filter((r) => r.reps != null || r.durationSec != null);
+    const targetSets = ex.sets;
+    const completedSets = filled.length;
+    const setsComplete = completedSets >= targetSets;
+
+    const targetIntensity = ex.scheme?.targetIntensity ?? null;
+    const targetWeight = ex.scheme?.weights?.[0] ?? null;
+
+    let actualAvgWeight: number | null = null;
+    let actualAvgIntensity: number | null = null;
+
+    if (ex.type === "WEIGHTED" && filled.length > 0) {
+      const withWeight = filled.filter((r) => r.weight != null && r.reps != null) as {
+        weight: number;
+        reps: number;
+      }[];
+      if (withWeight.length > 0) {
+        actualAvgWeight = withWeight.reduce((s, r) => s + r.weight, 0) / withWeight.length;
+        const est1RMs = withWeight.map((r) => compute1RM(r.weight, r.reps));
+        const avg1RM = est1RMs.reduce((s, v) => s + v, 0) / est1RMs.length;
+        const avgLoad = withWeight.reduce((s, r) => s + r.weight, 0) / withWeight.length;
+        if (avg1RM > 0) actualAvgIntensity = (avgLoad / avg1RM) * 100;
+      }
+    }
+
+    const onTarget = setsComplete && (targetIntensity == null || actualAvgIntensity == null || Math.abs(actualAvgIntensity - targetIntensity) <= 5);
+
+    return {
+      exerciseName: ex.name,
+      type: ex.type,
+      targetSets,
+      completedSets,
+      setsComplete,
+      targetWeight,
+      actualAvgWeight,
+      targetIntensity,
+      actualAvgIntensity,
+      onTarget,
+    };
+  });
+}

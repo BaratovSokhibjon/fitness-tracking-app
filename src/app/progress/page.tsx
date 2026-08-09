@@ -1,11 +1,13 @@
 import { getMeasurements } from "@/actions/progress";
+import { getExercise1RMTrends } from "@/queries/records";
 import { MeasurementForm } from "@/components/progress/measurement-form";
 import { MeasurementChart } from "@/components/progress/measurement-chart";
+import { ExerciseTrends } from "@/components/progress/exercise-trends";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProgressPage() {
-  const measurements = await getMeasurements();
+  const [measurements, trends] = await Promise.all([getMeasurements(), getExercise1RMTrends()]);
 
   const weightData = measurements.map((m) => ({ date: m.date.toISOString(), value: m.weight }));
   const waistData = measurements.map((m) => ({ date: m.date.toISOString(), value: m.waist }));
@@ -28,6 +30,8 @@ export default async function ProgressPage() {
       </div>
 
       <MeasurementForm />
+
+      <ExerciseTrends trends={trends} />
 
       <div className="space-y-4">
         {measurements.length === 0 ? (

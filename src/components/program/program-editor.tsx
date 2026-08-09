@@ -29,6 +29,7 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
   const [progressionType, setProgressionType] = useState<ProgressionType>(program.progressionType);
   const [roundTo, setRoundTo] = useState(program.roundTo);
   const [saving, setSaving] = useState(false);
+  const [scheduleMsg, setScheduleMsg] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
@@ -45,7 +46,10 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
   }
 
   async function handleActivate() {
-    await activateProgram(program.id);
+    const res = await activateProgram(program.id);
+    setScheduleMsg(
+      `Active. Calendar scheduled for ${program.durationWeeks} weeks (${res.created} new, ${res.updated} updated).`
+    );
     router.refresh();
   }
 
@@ -120,6 +124,7 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
             Delete
           </Button>
         </div>
+        {scheduleMsg && <p className="text-xs text-success">{scheduleMsg}</p>}
       </CardContent>
     </Card>
   );

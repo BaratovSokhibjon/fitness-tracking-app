@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PencilSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import {
   updateWorkout,
   deleteWorkout,
   createExercise,
+  updateExercise,
   deleteExercise,
   createExerciseLibrary,
   searchExerciseLibrary,
@@ -94,6 +96,53 @@ export function WorkoutForm({
   const [targetWeight, setTargetWeight] = useState("");
   const [restTime, setRestTime] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Inline edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editSets, setEditSets] = useState("");
+  const [editMinReps, setEditMinReps] = useState("");
+  const [editMaxReps, setEditMaxReps] = useState("");
+  const [editStartWeight, setEditStartWeight] = useState("");
+  const [editTargetWeight, setEditTargetWeight] = useState("");
+  const [editRestTime, setEditRestTime] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  function startEdit(ex: ExerciseFormData) {
+    setEditingId(ex.id);
+    setEditSets(String(ex.sets));
+    setEditMinReps(String(ex.minReps));
+    setEditMaxReps(String(ex.maxReps));
+    setEditStartWeight(ex.startWeight != null ? String(ex.startWeight) : "");
+    setEditTargetWeight(ex.targetWeight != null ? String(ex.targetWeight) : "");
+    setEditRestTime(ex.restTime != null ? String(ex.restTime) : "");
+    setEditNotes(ex.notes ?? "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit(ex: ExerciseFormData) {
+    const payload = {
+      exerciseId: ex.exerciseId,
+      sets: parseInt(editSets, 10) || ex.sets,
+      minReps: parseInt(editMinReps, 10) || ex.minReps,
+      maxReps: parseInt(editMaxReps, 10) || ex.maxReps,
+      startWeight: editStartWeight ? parseFloat(editStartWeight) : null,
+      targetWeight: editTargetWeight ? parseFloat(editTargetWeight) : null,
+      restTime: editRestTime ? parseInt(editRestTime, 10) : null,
+      notes: editNotes || null,
+    };
+    if (isEdit && workout) {
+      await updateExercise(ex.id, { workoutId: workout.id, ...payload });
+      router.refresh();
+    } else {
+      setExercises((prev) =>
+        prev.map((e) => (e.id === ex.id ? { ...e, ...payload } : e))
+      );
+    }
+    cancelEdit();
+  }
 
   async function handleSearch(q: string) {
     setQuery(q);
@@ -259,36 +308,86 @@ export function WorkoutForm({
           {exercises.length > 0 && (
             <div className="space-y-2">
               {exercises.map((ex) => (
-                <div key={ex.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                  <div className="min-w-0">
-                    <p className="font-medium">
-                      {ex.name}
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {ex.type === "BODYWEIGHT" ? "bodyweight" : ex.type === "TIMED" ? "timed" : "weighted"}
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {ex.sets} sets · {repLabel(ex.type, ex.minReps, ex.maxReps)} {ex.type === "TIMED" ? "per set" : "reps"}
-                      {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
-                      {ex.startWeight != null && ` · ${ex.startWeight} → ${ex.targetWeight ?? "—"} kg`}
-                    </p>
-                    {ex.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{ex.notes}</p>}
+                <div key={ex.id} className="rounded-md border">
+                  <div className="flex items-center justify-between px-3 py-2 text-sm">
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        {ex.name}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {ex.type === "BODYWEIGHT" ? "bodyweight" : ex.type === "TIMED" ? "timed" : "weighted"}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {ex.sets} sets · {repLabel(ex.type, ex.minReps, ex.maxReps)} {ex.type === "TIMED" ? "per set" : "reps"}
+                        {ex.restTime ? ` · ${ex.restTime}s rest` : ""}
+                        {ex.startWeight != null && ` · ${ex.startWeight} → ${ex.targetWeight ?? "—"} kg`}
+                      </p>
+                      {ex.notes && <p className="mt-0.5 truncate text-xs text-muted-foreground">{ex.notes}</p>}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => (editingId === ex.id ? cancelEdit() : startEdit(ex))}>
+                        <PencilSimple className="h-4 w-4" />
+                        <span className="sr-only">Edit {ex.name}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={async () => {
+                          if (isEdit) {
+                            await deleteExercise(ex.id);
+                            router.refresh();
+                          } else {
+                            setExercises((prev) => prev.filter((e) => e.id !== ex.id));
+                          }
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={async () => {
-                      if (isEdit) {
-                        await deleteExercise(ex.id);
-                        router.refresh();
-                      } else {
-                        setExercises((prev) => prev.filter((e) => e.id !== ex.id));
-                      }
-                    }}
-                  >
-                    Remove
-                  </Button>
+                  {editingId === ex.id && (
+                    <div className="space-y-3 border-t px-3 py-3">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`edit-sets-${ex.id}`}>Sets</Label>
+                          <Input id={`edit-sets-${ex.id}`} inputMode="numeric" value={editSets} onChange={(e) => setEditSets(e.target.value)} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`edit-min-${ex.id}`}>{ex.type === "TIMED" ? "Min s" : "Min reps"}</Label>
+                          <Input id={`edit-min-${ex.id}`} inputMode="numeric" value={editMinReps} onChange={(e) => setEditMinReps(e.target.value)} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`edit-max-${ex.id}`}>{ex.type === "TIMED" ? "Max s" : "Max reps"}</Label>
+                          <Input id={`edit-max-${ex.id}`} inputMode="numeric" value={editMaxReps} onChange={(e) => setEditMaxReps(e.target.value)} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`edit-rest-${ex.id}`}>Rest (s)</Label>
+                          <Input id={`edit-rest-${ex.id}`} inputMode="numeric" value={editRestTime} onChange={(e) => setEditRestTime(e.target.value)} placeholder="90" />
+                        </div>
+                      </div>
+                      {ex.type === "WEIGHTED" && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="space-y-1.5">
+                            <Label htmlFor={`edit-sw-${ex.id}`}>Start weight (kg)</Label>
+                            <Input id={`edit-sw-${ex.id}`} inputMode="decimal" value={editStartWeight} onChange={(e) => setEditStartWeight(e.target.value)} placeholder="80" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor={`edit-tw-${ex.id}`}>Target weight (kg)</Label>
+                            <Input id={`edit-tw-${ex.id}`} inputMode="decimal" value={editTargetWeight} onChange={(e) => setEditTargetWeight(e.target.value)} placeholder="90" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`edit-notes-${ex.id}`}>Cue / notes (optional)</Label>
+                        <Input id={`edit-notes-${ex.id}`} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Keep elbows tucked" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => saveEdit(ex)}>Save</Button>
+                        <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
