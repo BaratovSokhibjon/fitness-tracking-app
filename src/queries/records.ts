@@ -215,3 +215,49 @@ export async function getExercise1RMTrends(limit = 20) {
   trends.sort((a, b) => a.name.localeCompare(b.name));
   return trends;
 }
+
+export type ExercisePR = {
+  exerciseId: string;
+  maxWeight: number | null;
+  best1RM: number | null;
+  maxReps: number | null;
+  maxDurationSec: number | null;
+};
+
+export async function getExercisePRs(exerciseIds: string[]): Promise<ExercisePR[]> {
+  if (exerciseIds.length === 0) return [];
+  const logs = await prisma.exerciseLog.findMany({
+    where: { exerciseId: { in: exerciseIds } },
+    select: { exerciseId: true, weight: true, reps: true, durationSec: true },
+  });
+
+  const byExercise = new Map<string, { maxWeight: number | null; best1RM: number | null; maxReps: number | null; maxDurationSec: number | null }>();
+  for (const l of logs) {
+    let rec = byExercise.get(l.exerciseId);
+    if (!rec) {
+      rec = { maxWeight: null, best1RM: null, maxReps: null, maxDurationSec: null };
+      byExercise.set(l.exerciseId, rec);
+    }
+    if (l.weight != null && l.weight > 0 && (rec.maxWeight == null || l.weight > rec.maxWeight)) {
+      rec.maxWeight = l.weight;
+    }
+    if (l.reps != null && l.reps > 0 && (rec.maxReps == null || l.reps > rec.maxReps)) {
+      rec.maxReps = l.reps;
+    }
+    if (l.durationSec != null && l.durationSec > 0 && (rec.maxDurationSec == null || l.durationSec > rec.maxDurationSec)) {
+      rec.maxDurationSec = l.durationSec;
+    }
+    if (l.reps != null && l.weight != null && l.weight > 0 && l.reps > 0) {
+      const rm = epley1RM(l.weight, l.reps);
+      if (rm != null && (rec.best1RM == null || rm > rec.best1RM)) rec.best1RM = rm;
+    }
+  }
+
+  return Array.from(byExercise.entries()).map(([exerciseId, r]) => ({
+    exerciseId,
+    maxWeight: r.maxWeight,
+    best1RM: r.best1RM,
+    maxReps: r.maxReps,
+    maxDurationSec: r.maxDurationSec,
+  }));
+}

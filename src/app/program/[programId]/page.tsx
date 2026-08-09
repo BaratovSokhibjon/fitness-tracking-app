@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgramEditor } from "@/components/program/program-editor";
+import { ProgramPreview } from "@/components/program/program-preview";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,27 @@ export default async function EditProgramPage({ params }: { params: Promise<{ pr
           <Link href={`/program/workout/new?programId=${program.id}`}>+ Add Workout</Link>
         </Button>
       </div>
+
+      <ProgramPreview
+        workouts={program.workouts.map((w) => ({
+          id: w.id,
+          name: w.name,
+          dayOfWeek: w.dayOfWeek,
+          exercises: w.exercises.map((e) => ({
+            id: e.id,
+            name: e.exercise.name,
+            type: e.exercise.type,
+            sets: e.sets,
+            minReps: e.minReps,
+            maxReps: e.maxReps,
+            startWeight: e.startWeight,
+            targetWeight: e.targetWeight,
+          })),
+        }))}
+        durationWeeks={program.durationWeeks}
+        progressionType={program.progressionType}
+        roundTo={program.roundTo}
+      />
     </div>
   );
 }

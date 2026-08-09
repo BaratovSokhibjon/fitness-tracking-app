@@ -43,12 +43,20 @@ type SetState = { weight: number | null; reps: number | null; durationSec: numbe
 
 type HistorySession = { date: Date; rows: ExerciseHistoryRow[] };
 
+type ExercisePR = {
+  maxWeight: number | null;
+  best1RM: number | null;
+  maxReps: number | null;
+  maxDurationSec: number | null;
+};
+
 export function WorkoutSession({
   scheduleId,
   workoutId,
   date,
   exercises,
   historyByExercise,
+  prs,
   existingLogs,
   isCompleted,
 }: {
@@ -57,6 +65,7 @@ export function WorkoutSession({
   date: string;
   exercises: Exercise[];
   historyByExercise: Record<string, HistorySession[]>;
+  prs: Record<string, ExercisePR>;
   existingLogs: Log[];
   isCompleted: boolean;
 }) {
@@ -65,6 +74,7 @@ export function WorkoutSession({
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<SessionComparison[] | null>(null);
+  const [prNames, setPrNames] = useState<string[]>([]);
 
   // Rest timer state
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
@@ -229,8 +239,28 @@ export function WorkoutSession({
     }
 
     const comparison = compareSession(sets, exercises);
+    const prsAchieved: string[] = [];
+    for (const ex of exercises) {
+      const pr = prs[ex.id];
+      const rows = sets[ex.id] ?? [];
+      const gotPR = rows.some((row) => {
+        if (ex.type === "WEIGHTED") {
+          const rm = row.weight != null && row.reps != null ? epley1RM(row.weight, row.reps) : null;
+          return (
+            (row.weight != null && pr?.maxWeight != null && row.weight > pr.maxWeight) ||
+            (rm != null && pr?.best1RM != null && rm > pr.best1RM)
+          );
+        }
+        if (ex.type === "BODYWEIGHT") {
+          return row.reps != null && pr?.maxReps != null && row.reps > pr.maxReps;
+        }
+        return row.durationSec != null && pr?.maxDurationSec != null && row.durationSec > pr.maxDurationSec;
+      });
+      if (gotPR) prsAchieved.push(ex.name);
+    }
     setCompleted(true);
     setSummary(comparison);
+    setPrNames(prsAchieved);
     setSaving(false);
   }
 
@@ -260,6 +290,11 @@ export function WorkoutSession({
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {prNames.length > 0 && (
+              <p className="mb-3 rounded-none border border-success/40 bg-success/5 px-3 py-2 text-sm font-medium text-success">
+                New PRs: {prNames.join(", ")}
+              </p>
+            )}
             <ul className="space-y-1.5">
               {summary.map((row) => (
                 <li key={row.exerciseName} className="flex items-center justify-between rounded-none border px-3 py-2 text-sm">
@@ -371,9 +406,21 @@ export function WorkoutSession({
                     ex.type === "WEIGHTED" && row.reps != null && row.weight != null
                       ? epley1RM(row.weight, row.reps)
                       : null;
+                  const pr = prs[ex.id];
+                  const isPR =
+                    (ex.type === "WEIGHTED" &&
+                      ((row.weight != null && pr?.maxWeight != null && row.weight > pr.maxWeight) ||
+                        (est1RM != null && pr?.best1RM != null && est1RM > pr.best1RM))) ||
+                    (ex.type === "BODYWEIGHT" &&
+                      row.reps != null && pr?.maxReps != null && row.reps > pr.maxReps) ||
+                    (ex.type === "TIMED" &&
+                      row.durationSec != null && pr?.maxDurationSec != null && row.durationSec > pr.maxDurationSec);
                   return (
                     <div key={i} className="contents">
-                      <div className="flex items-center text-sm text-muted-foreground">{i + 1}</div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        {i + 1}
+                        {isPR && <Badge variant="success" className="text-[10px] leading-4">PR</Badge>}
+                      </div>
                       {ex.type === "TIMED" ? (
                         <NumberInput
                           value={row.durationSec}

@@ -310,3 +310,62 @@ export function compareSession(
     };
   });
 }
+
+export interface ProgramPreviewExercise {
+  id: string;
+  name: string;
+  type: string;
+  sets: number;
+  minReps: number;
+  maxReps: number;
+  startWeight: number | null;
+  targetWeight: number | null;
+  weeks: {
+    week: number;
+    estimated1RM: number;
+    targetReps: number;
+    targetIntensity: number;
+    weights: number[];
+    reps: number[];
+  }[];
+}
+
+export function computeProgramPreview(
+  exercises: {
+    id: string;
+    name: string;
+    type: string;
+    sets: number;
+    minReps: number;
+    maxReps: number;
+    startWeight: number | null;
+    targetWeight: number | null;
+  }[],
+  program: {
+    progressionType: ProgressionType;
+    roundTo: number;
+    durationWeeks: number;
+  },
+): ProgramPreviewExercise[] {
+  const totalWeeks = Math.max(1, program.durationWeeks);
+  return exercises.map((ex) => {
+    const weeks = [];
+    for (let week = 1; week <= totalWeeks; week++) {
+      const scheme = computeWeekScheme(week, totalWeeks, ex, program);
+      weeks.push({
+        week,
+        estimated1RM: scheme?.estimated1RM ?? 0,
+        targetReps: scheme?.targetReps ?? 0,
+        targetIntensity: scheme?.targetIntensity ?? 0,
+        weights: scheme?.weights ?? [],
+        reps: scheme?.sets?.reps ?? [],
+      });
+    }
+    return { ...ex, weeks };
+  });
+}
+
+export function formatPreviewCell(week: ProgramPreviewExercise["weeks"][number]): string {
+  if (week.weights.length === 0 || week.reps.length === 0) return "—";
+  return week.reps.map((r, i) => `${r}×${week.weights[i] ?? "—"}`).join(" ");
+}

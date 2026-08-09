@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { logSetSchema, sessionSchema, type LogSetInput, type SessionInput } from "@/schemas/session";
+import { compute1RM } from "@/lib/progression";
 
 export async function startSession(scheduleId: string) {
   const schedule = await prisma.workoutSchedule.findUnique({
@@ -144,6 +145,34 @@ export async function completeSession(input: SessionInput) {
       });
     }
 
+    // Auto-progression: for weighted exercises with a startWeight, advance the
+    // baseline from the best achieved set this session (Epley 1RM). Never regress.
+    const weightedLogs = data.exerciseLogs.filter((l) => l.weight != null && l.reps != null && l.weight > 0 && l.reps > 0);
+    if (weightedLogs.length > 0) {
+      const templateExercises = await tx.workoutExercise.findMany({
+        where: { workoutId: data.workoutId, startWeight: { not: null } },
+      });
+      const bestByExercise = new Map<string, { weight: number; reps: number; est1RM: number }>();
+      for (const l of weightedLogs) {
+        const est1RM = compute1RM(l.weight!, l.reps!);
+        const current = bestByExercise.get(l.exerciseId);
+        if (!current || est1RM > current.est1RM) {
+          bestByExercise.set(l.exerciseId, { weight: l.weight!, reps: l.reps!, est1RM });
+        }
+      }
+      for (const t of templateExercises) {
+        const best = bestByExercise.get(t.id);
+        if (!best) continue;
+        const nextBaseline = Math.round(best.est1RM * 0.85 * 10) / 10;
+        if (nextBaseline > (t.startWeight ?? 0)) {
+          await tx.workoutExercise.update({
+            where: { id: t.id },
+            data: { startWeight: nextBaseline },
+          });
+        }
+      }
+    }
+
     return session;
   });
 
@@ -156,6 +185,7 @@ export async function completeSession(input: SessionInput) {
   revalidatePath(`/workout/${scheduleId}`);
   revalidatePath("/calendar");
   revalidatePath("/workout/history");
+  revalidatePath("/program");
   return upserted;
 }
 

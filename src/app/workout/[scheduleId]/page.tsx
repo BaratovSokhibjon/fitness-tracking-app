@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSessionByScheduleId } from "@/actions/session";
-import { getExerciseHistory } from "@/queries/records";
+import { getExerciseHistory, getExercisePRs, type ExercisePR } from "@/queries/records";
 import { WorkoutSession, type Exercise } from "@/components/workout/workout-session";
 import { computeWeekScheme } from "@/lib/progression";
 
@@ -10,12 +10,15 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
   const schedule = await getSessionByScheduleId(scheduleId);
   if (!schedule?.workout) notFound();
 
-  const histories = await Promise.all(
-    schedule.workout.exercises.map((e) => getExerciseHistory(e.id))
-  );
+  const exerciseIds = schedule.workout.exercises.map((e) => e.id);
+  const [histories, prs] = await Promise.all([
+    Promise.all(exerciseIds.map((e) => getExerciseHistory(e))),
+    getExercisePRs(exerciseIds),
+  ]);
   const historyByExercise = new Map(
-    schedule.workout.exercises.map((e, i) => [e.id, histories[i]])
+    exerciseIds.map((e, i) => [e, histories[i]])
   );
+  const prByExercise = new Map<string, ExercisePR>(prs.map((p) => [p.exerciseId, p]));
 
   const program = schedule.workout.program;
   const startDate = new Date(program?.createdAt ?? schedule.date);
@@ -73,6 +76,7 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
         historyByExercise={Object.fromEntries(
           historyByExercise.entries()
         )}
+        prs={Object.fromEntries(prByExercise.entries())}
         existingLogs={
           schedule.session?.exerciseLogs.map((l) => ({
             exerciseId: l.exerciseId,
