@@ -25,14 +25,30 @@ const primaryTabs = [
   { href: "/dashboard", label: "Stats", icon: ChartLine },
 ];
 
-const overflowItems = [
-  { href: "/progress", label: "Progress", icon: ChartLine },
-  { href: "/history", label: "History", icon: ChartLine },
-  { href: "/foods", label: "Foods", icon: ForkKnife },
-  { href: "/review", label: "Review", icon: Pulse },
-  { href: "/goals", label: "Goals", icon: Target },
-  { href: "/workout/history", label: "Workout Log", icon: Crosshair },
-  { href: "/profile", label: "Profile", icon: GearSix },
+const overflowSections = [
+  {
+    label: "Training",
+    items: [
+      { href: "/workout/history", label: "Workout Log", icon: Crosshair },
+    ],
+  },
+  {
+    label: "Tracking",
+    items: [
+      { href: "/progress", label: "Progress", icon: ChartLine },
+      { href: "/history", label: "History", icon: ChartLine },
+      { href: "/review", label: "Review", icon: Pulse },
+      { href: "/goals", label: "Goals", icon: Target },
+    ],
+  },
+  {
+    label: "Nutrition",
+    items: [{ href: "/foods", label: "Foods", icon: ForkKnife }],
+  },
+  {
+    label: "Settings",
+    items: [{ href: "/profile", label: "Profile", icon: GearSix }],
+  },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -77,24 +93,33 @@ export function MobileTabs() {
             <DialogHeader>
               <DialogTitle>More</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-1">
-              {overflowItems.map((item) => {
-                const active = isActive(pathname, item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
-                      active ? "bg-cloud text-ink" : "text-mute hover:bg-cloud"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <div className="space-y-3">
+              {overflowSections.map((section) => (
+                <div key={section.label}>
+                  <p className="px-1 pb-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-stone">
+                    {section.label}
+                  </p>
+                  <div className="grid gap-1">
+                    {section.items.map((item) => {
+                      const active = isActive(pathname, item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
+                            active ? "bg-cloud text-ink" : "text-mute hover:bg-cloud"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </DialogContent>
         </Dialog>
