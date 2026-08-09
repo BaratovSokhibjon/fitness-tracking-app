@@ -81,7 +81,13 @@ export function Sidebar() {
   return (
     <aside className="hidden sticky top-0 h-dvh w-56 shrink-0 flex-col overflow-hidden border-r border-hairline bg-linen md:flex">
       <div className="flex h-14 shrink-0 items-center gap-2 border-b border-hairline px-4">
-        <Barbell className="h-5 w-5 text-ink" />
+        <svg className="h-6 w-6 text-ink shrink-0" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="currentColor" strokeWidth="4" strokeLinecap="square">
+            <line x1="25" y1="24" x2="25" y2="76"/><line x1="40" y1="24" x2="40" y2="76"/>
+            <line x1="55" y1="24" x2="55" y2="76"/><line x1="70" y1="24" x2="70" y2="76"/>
+          </g>
+          <line x1="20" y1="18" x2="78" y2="80" stroke="#1e9e52" strokeWidth="4" strokeLinecap="square"/>
+        </svg>
         <span className="text-sm font-medium uppercase tracking-wider text-ink">Somatix</span>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto p-3">
