@@ -12,8 +12,6 @@ import {
   type UpdateCreatineConfigInput,
 } from "@/schemas/creatine";
 
-const DEFAULT_PROFILE_ID = "default-profile";
-
 export async function getCreatineConfig() {
   const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   if (!profile) return null;
@@ -40,7 +38,6 @@ export async function updateCreatineConfig(input: UpdateCreatineConfigInput) {
       creatineMaintenanceDose: data.maintenanceDose,
     },
     create: {
-      id: DEFAULT_PROFILE_ID,
       userId: DEFAULT_USER_ID,
       creatineEnabled: data.enabled,
       creatineProtocol: data.protocol,

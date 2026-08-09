@@ -150,7 +150,9 @@ export async function addFoodToLog(input: FoodLogEntryInput) {
 }
 
 export async function removeFoodFromLog(entryId: string) {
-  const entry = await prisma.foodLogEntry.findUnique({ where: { id: entryId } });
+  const entry = await prisma.foodLogEntry.findFirst({
+    where: { id: entryId, checkIn: { userId: DEFAULT_USER_ID } },
+  });
   if (!entry) return { ok: false };
 
   await prisma.foodLogEntry.delete({ where: { id: entryId } });
@@ -219,8 +221,8 @@ export async function deleteMealTemplate(id: string) {
 
 export async function logMealTemplate(date: string, templateId: string) {
   const day = startOfDay(new Date(date));
-  const template = await prisma.mealTemplate.findUnique({
-    where: { id: templateId },
+  const template = await prisma.mealTemplate.findFirst({
+    where: { id: templateId, userId: DEFAULT_USER_ID },
     include: { items: { include: { foodItem: true } } },
   });
   if (!template) throw new Error("Meal template not found");

@@ -116,11 +116,15 @@ export async function getScheduleForMonth(date: Date) {
 }
 
 export async function skipWorkout(scheduleId: string) {
-  const schedule = await prisma.workoutSchedule.update({
-    where: { id: scheduleId },
+  const schedule = await prisma.workoutSchedule.findFirst({
+    where: { id: scheduleId, userId: DEFAULT_USER_ID },
+  });
+  if (!schedule) throw new Error("Schedule not found");
+  const updated = await prisma.workoutSchedule.update({
+    where: { id: schedule.id },
     data: { status: "SKIPPED" },
   });
   revalidatePath("/calendar");
   revalidatePath("/");
-  return schedule;
+  return updated;
 }

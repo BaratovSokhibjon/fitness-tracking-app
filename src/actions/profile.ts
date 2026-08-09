@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_USER_ID } from "@/lib/user";
 import { profileSchema, type ProfileInput } from "@/schemas/profile";
 
-const DEFAULT_PROFILE_ID = "default-profile";
-
 export async function updateProfile(input: ProfileInput) {
   const data = profileSchema.parse(input);
 
@@ -17,7 +15,6 @@ export async function updateProfile(input: ProfileInput) {
       programStartDate: data.programStartDate ? new Date(data.programStartDate) : undefined,
     },
     create: {
-      id: DEFAULT_PROFILE_ID,
       userId: DEFAULT_USER_ID,
       ...data,
       programStartDate: data.programStartDate ? new Date(data.programStartDate) : undefined,

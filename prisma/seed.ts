@@ -95,10 +95,9 @@ async function main() {
   console.log(`  user: ${user.email}`);
 
   const profile = await prisma.profile.upsert({
-    where: { id: "default-profile" },
-    update: { userId: DEFAULT_USER_ID },
+    where: { userId: DEFAULT_USER_ID },
+    update: {},
     create: {
-      id: "default-profile",
       userId: DEFAULT_USER_ID,
       age: 30,
       height: 178,
@@ -133,7 +132,7 @@ async function main() {
     console.log("  foods: skipped (already present)");
   }
 
-  const goalCount = await prisma.goal.count();
+  const goalCount = await prisma.goal.count({ where: { userId: DEFAULT_USER_ID } });
   if (goalCount === 0) {
     for (const g of defaultGoals) {
       await prisma.goal.create({ data: { ...g, userId: DEFAULT_USER_ID } });

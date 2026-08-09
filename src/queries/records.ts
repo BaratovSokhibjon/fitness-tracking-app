@@ -65,6 +65,7 @@ export type PersonalRecord = {
 
 export async function getPersonalRecords() {
   const logs = await prisma.exerciseLog.findMany({
+    where: { userId: DEFAULT_USER_ID },
     include: {
       exercise: {
         include: { exercise: { select: { id: true, name: true, type: true } } },

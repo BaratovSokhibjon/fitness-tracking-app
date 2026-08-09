@@ -16,10 +16,12 @@ import {
 async function upsertCheckIn(whereDate: Date, data: object) {
   const date = startOfDay(whereDate);
   const userId = DEFAULT_USER_ID;
+  const fields = { ...(data as Record<string, unknown>) };
+  delete fields.date; // the composite key owns the date; strip any client-provided value
   return prisma.dailyCheckIn.upsert({
     where: { userId_date: { userId, date } },
-    update: data,
-    create: { date, userId, ...data },
+    update: fields,
+    create: { date, userId, ...fields },
   });
 }
 
@@ -100,6 +102,7 @@ export async function getCheckIn(date: Date) {
 export async function getCheckInsByDateRange(start: Date, end: Date) {
   return prisma.dailyCheckIn.findMany({
     where: {
+      userId: DEFAULT_USER_ID,
       date: { gte: startOfDay(start), lte: startOfDay(end) },
     },
     orderBy: { date: "asc" },

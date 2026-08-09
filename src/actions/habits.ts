@@ -35,7 +35,7 @@ export async function getHabitsForDate(date: Date) {
   const day = startOfDay(date);
   const habits = await prisma.habit.findMany({
     where: { isActive: true },
-    include: { logs: { where: { date: day } } },
+    include: { logs: { where: { userId: DEFAULT_USER_ID, date: day } } },
     orderBy: { sortOrder: "asc" },
   });
 

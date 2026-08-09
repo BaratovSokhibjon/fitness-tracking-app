@@ -8,8 +8,8 @@ import { logSetSchema, sessionSchema, type LogSetInput, type SessionInput } from
 import { compute1RM } from "@/lib/progression";
 
 export async function startSession(scheduleId: string) {
-  const schedule = await prisma.workoutSchedule.findUnique({
-    where: { id: scheduleId },
+  const schedule = await prisma.workoutSchedule.findFirst({
+    where: { id: scheduleId, userId: DEFAULT_USER_ID },
     include: { session: true, workout: true },
   });
   if (!schedule?.workout) throw new Error("No workout scheduled for this date");
@@ -49,8 +49,8 @@ export async function startSession(scheduleId: string) {
 export async function logSet(input: LogSetInput) {
   const data = logSetSchema.parse(input);
 
-  const schedule = await prisma.workoutSchedule.findUnique({
-    where: { id: data.scheduleId },
+  const schedule = await prisma.workoutSchedule.findFirst({
+    where: { id: data.scheduleId, userId: DEFAULT_USER_ID },
     include: { session: true },
   });
   if (!schedule?.session) throw new Error("Session not started");
@@ -88,8 +88,8 @@ export async function logSet(input: LogSetInput) {
 }
 
 export async function deleteSetLog(scheduleId: string, exerciseId: string, setNumber: number) {
-  const schedule = await prisma.workoutSchedule.findUnique({
-    where: { id: scheduleId },
+  const schedule = await prisma.workoutSchedule.findFirst({
+    where: { id: scheduleId, userId: DEFAULT_USER_ID },
     include: { session: true },
   });
   if (!schedule?.session) return { ok: true };
@@ -104,11 +104,16 @@ export async function completeSession(input: SessionInput) {
   const data = sessionSchema.parse(input);
   const scheduleId = data.scheduleId;
 
-  const schedule = await prisma.workoutSchedule.findUnique({
-    where: { id: scheduleId },
-    include: { session: true },
+  const schedule = await prisma.workoutSchedule.findFirst({
+    where: { id: scheduleId, userId: DEFAULT_USER_ID },
+    include: { session: true, workout: { include: { exercises: { select: { id: true } } } } },
   });
   if (!schedule) throw new Error("Schedule not found");
+  if (!schedule.workout) throw new Error("No workout scheduled for this date");
+
+  // Derive the workout from the schedule; never trust the client-supplied workoutId.
+  const workoutId = schedule.workout.id;
+  const validExerciseIds = new Set(schedule.workout.exercises.map((e) => e.id));
 
   let session = schedule.session;
   const finishedAt = new Date();
@@ -125,7 +130,7 @@ export async function completeSession(input: SessionInput) {
         data: {
           userId: DEFAULT_USER_ID,
           scheduleId,
-          workoutId: data.workoutId,
+          workoutId,
           date: startOfDay(new Date(data.date)),
           startedAt: new Date(),
           finishedAt,
@@ -140,7 +145,9 @@ export async function completeSession(input: SessionInput) {
       });
     }
 
-    for (const log of data.exerciseLogs) {
+    // Only write logs for exerciseIds that belong to this schedule's workout.
+    const validLogs = data.exerciseLogs.filter((l) => validExerciseIds.has(l.exerciseId));
+    for (const log of validLogs) {
       await tx.exerciseLog.upsert({
         where: {
           sessionId_exerciseId_setNumber: {
@@ -172,10 +179,10 @@ export async function completeSession(input: SessionInput) {
 
     // Auto-progression: for weighted exercises with a startWeight, advance the
     // baseline from the best achieved set this session (Epley 1RM). Never regress.
-    const weightedLogs = data.exerciseLogs.filter((l) => l.weight != null && l.reps != null && l.weight > 0 && l.reps > 0);
+    const weightedLogs = validLogs.filter((l) => l.weight != null && l.reps != null && l.weight > 0 && l.reps > 0);
     if (weightedLogs.length > 0) {
       const templateExercises = await tx.workoutExercise.findMany({
-        where: { workoutId: data.workoutId, startWeight: { not: null } },
+        where: { id: { in: Array.from(validExerciseIds) }, startWeight: { not: null } },
       });
       const bestByExercise = new Map<string, { weight: number; reps: number; est1RM: number }>();
       for (const l of weightedLogs) {
@@ -227,8 +234,8 @@ export async function getSessionHistory() {
 }
 
 export async function getSessionByScheduleId(scheduleId: string) {
-  const schedule = await prisma.workoutSchedule.findUnique({
-    where: { id: scheduleId },
+  const schedule = await prisma.workoutSchedule.findFirst({
+    where: { id: scheduleId, userId: DEFAULT_USER_ID },
     include: {
       workout: {
         include: {
