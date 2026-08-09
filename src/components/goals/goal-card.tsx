@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NumberInput } from "@/components/ui/number-input";
 import { createGoal, updateGoal, deleteGoal } from "@/actions/goals";
 import { percent } from "@/lib/utils";
 
@@ -74,11 +75,29 @@ export function GoalForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="goal-target">Target</Label>
-          <Input id="goal-target" type="number" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} />
+          <NumberInput
+            id="goal-target"
+            value={targetValue === "" ? null : parseFloat(targetValue)}
+            onValueChange={(v) => setTargetValue(v == null ? "" : String(v))}
+            min={0}
+            max={100000}
+            step={1}
+            decimals={1}
+            placeholder="80"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="goal-current">Current</Label>
-          <Input id="goal-current" type="number" value={currentValue} onChange={(e) => setCurrentValue(e.target.value)} />
+          <NumberInput
+            id="goal-current"
+            value={currentValue === "" ? null : parseFloat(currentValue)}
+            onValueChange={(v) => setCurrentValue(v == null ? "" : String(v))}
+            min={0}
+            max={100000}
+            step={1}
+            decimals={1}
+            placeholder="0"
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">

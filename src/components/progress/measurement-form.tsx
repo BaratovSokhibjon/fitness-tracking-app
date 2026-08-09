@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { NumberInput } from "@/components/ui/number-input";
 import { saveMeasurement } from "@/actions/progress";
 
 type MeasurementFormData = {
@@ -54,8 +54,8 @@ export function MeasurementForm({ initial }: { initial?: MeasurementFormData }) 
   const [saving, setSaving] = useState(false);
 
   function set(key: keyof MeasurementFormData) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((f) => ({ ...f, [key]: e.target.value }));
+    return (v: number | null) => {
+      setForm((f) => ({ ...f, [key]: v == null ? null : String(v) }));
     };
   }
 
@@ -104,12 +104,14 @@ export function MeasurementForm({ initial }: { initial?: MeasurementFormData }) 
           {fields.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <Label htmlFor={`measurement-${f.key}`}>{f.label}</Label>
-              <Input
+              <NumberInput
                 id={`measurement-${f.key}`}
-                type="number"
-                step="0.1"
-                value={(form[f.key] as number | null) ?? ""}
-                onChange={set(f.key)}
+                value={form[f.key] == null || form[f.key] === "" ? null : parseFloat(form[f.key] as string)}
+                onValueChange={set(f.key)}
+                min={0}
+                max={300}
+                step={0.1}
+                decimals={1}
                 placeholder={f.placeholder}
               />
             </div>

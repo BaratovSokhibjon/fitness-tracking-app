@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { categoryLabels } from "@/components/foods/food-card";
 import { addFoodToLog, removeFoodFromLog, getFoodLogForDate, searchFoods, copyYesterdaysMeals } from "@/actions/foods";
@@ -92,12 +93,16 @@ export function FoodSelector({ date }: { date: string }) {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Input
+                      <NumberInput
+                        compact
                         className="h-8 w-20"
-                        type="number"
-                        step="0.1"
-                        value={quantities[food.id] ?? "1"}
-                        onChange={(e) => setQuantities((q) => ({ ...q, [food.id]: e.target.value }))}
+                        value={(quantities[food.id] ?? "1") === "" ? null : parseFloat(quantities[food.id] ?? "1")}
+                        onValueChange={(v) => setQuantities((q) => ({ ...q, [food.id]: v == null ? "" : String(v) }))}
+                        min={0.1}
+                        max={100}
+                        step={0.5}
+                        decimals={1}
+                        placeholder="1"
                       />
                       <Button size="sm" onClick={() => handleAdd(food.id)}>
                         <Plus className="h-4 w-4" />

@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { NumberInput } from "@/components/ui/number-input";
 import { updateProfile } from "@/actions/profile";
 
 export type ProfileData = {
@@ -40,9 +40,9 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  function set(key: keyof typeof form) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((f) => ({ ...f, [key]: e.target.value }));
+  function numChange(key: keyof typeof form) {
+    return (v: number | null) => {
+      setForm((f) => ({ ...f, [key]: v == null ? "" : String(v) }));
       setMessage(null);
     };
   }
@@ -73,16 +73,14 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
     router.refresh();
   }
 
-  const fields: { key: keyof typeof form; label: string; placeholder: string; type?: string }[] = [
-    { key: "age", label: "Age", placeholder: "30", type: "number" },
-    { key: "height", label: "Height (cm)", placeholder: "178", type: "number" },
-    { key: "dailyCaloriesTarget", label: "Daily calories target", placeholder: "2200", type: "number" },
-    { key: "dailyProteinTarget", label: "Daily protein target (g)", placeholder: "160", type: "number" },
-    { key: "dailyCarbsTarget", label: "Daily carbs target (g)", placeholder: "250", type: "number" },
-    { key: "dailyFatTarget", label: "Daily fat target (g)", placeholder: "70", type: "number" },
-    { key: "dailyWaterTarget", label: "Daily water target (ml)", placeholder: "3000", type: "number" },
-    { key: "dailyStepsTarget", label: "Daily steps target", placeholder: "10000", type: "number" },
-    { key: "sleepTarget", label: "Sleep target (hours)", placeholder: "8", type: "number" },
+  const fields: { key: keyof typeof form; label: string; placeholder: string; step: number; decimals: number; min: number; max: number }[] = [
+    { key: "dailyCaloriesTarget", label: "Daily calories target", placeholder: "2200", step: 50, decimals: 0, min: 500, max: 10000 },
+    { key: "dailyProteinTarget", label: "Daily protein target (g)", placeholder: "160", step: 5, decimals: 0, min: 0, max: 500 },
+    { key: "dailyCarbsTarget", label: "Daily carbs target (g)", placeholder: "250", step: 5, decimals: 0, min: 0, max: 1000 },
+    { key: "dailyFatTarget", label: "Daily fat target (g)", placeholder: "70", step: 5, decimals: 0, min: 0, max: 500 },
+    { key: "dailyWaterTarget", label: "Daily water target (ml)", placeholder: "3000", step: 250, decimals: 0, min: 0, max: 10000 },
+    { key: "dailyStepsTarget", label: "Daily steps target", placeholder: "10000", step: 500, decimals: 0, min: 0, max: 100000 },
+    { key: "sleepTarget", label: "Sleep target (hours)", placeholder: "8", step: 0.5, decimals: 1, min: 0, max: 24 },
   ];
 
   return (
@@ -104,11 +102,29 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="age">Age</Label>
-            <Input id="age" type="number" value={form.age} onChange={set("age")} placeholder="30" />
+            <NumberInput
+              id="age"
+              value={form.age === "" ? null : parseFloat(form.age)}
+              onValueChange={numChange("age")}
+              min={0}
+              max={120}
+              step={1}
+              decimals={0}
+              placeholder="30"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="height">Height (cm)</Label>
-            <Input id="height" type="number" value={form.height} onChange={set("height")} placeholder="178" />
+            <NumberInput
+              id="height"
+              value={form.height === "" ? null : parseFloat(form.height)}
+              onValueChange={numChange("height")}
+              min={0}
+              max={250}
+              step={1}
+              decimals={1}
+              placeholder="178"
+            />
           </div>
         </CardContent>
       </Card>
@@ -119,10 +135,19 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
           <CardDescription>Used by the Today page counters and goals.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
-          {fields.slice(2).map((f) => (
+          {fields.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <Label htmlFor={f.key}>{f.label}</Label>
-              <Input id={f.key} type={f.type} value={form[f.key]} onChange={set(f.key)} placeholder={f.placeholder} />
+              <NumberInput
+                id={f.key}
+                value={form[f.key] === "" ? null : parseFloat(form[f.key])}
+                onValueChange={numChange(f.key)}
+                min={f.min}
+                max={f.max}
+                step={f.step}
+                decimals={f.decimals}
+                placeholder={f.placeholder}
+              />
             </div>
           ))}
         </CardContent>

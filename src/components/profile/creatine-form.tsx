@@ -6,9 +6,9 @@ import { format } from "date-fns";
 import { Flask } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { NumberInput } from "@/components/ui/number-input";
 import { updateCreatineConfig } from "@/actions/creatine";
 
 export type CreatineConfigData = {
@@ -109,11 +109,15 @@ export function CreatineForm({ config }: { config: CreatineConfigData | null }) 
               {form.protocol === "LOADING" ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="creatine-days">Loading days</Label>
-                  <Input
+                  <NumberInput
                     id="creatine-days"
-                    type="number"
-                    value={form.loadingDays}
-                    onChange={(e) => setForm((f) => ({ ...f, loadingDays: e.target.value }))}
+                    value={form.loadingDays === "" ? null : parseFloat(form.loadingDays)}
+                    onValueChange={(v) => setForm((f) => ({ ...f, loadingDays: v == null ? "" : String(v) }))}
+                    min={1}
+                    max={30}
+                    step={1}
+                    decimals={0}
+                    placeholder="7"
                   />
                 </div>
               ) : (
@@ -125,21 +129,29 @@ export function CreatineForm({ config }: { config: CreatineConfigData | null }) 
               {form.protocol === "LOADING" && (
                 <div className="space-y-1.5">
                   <Label htmlFor="creatine-loading-dose">Loading dose (g/day)</Label>
-                  <Input
+                  <NumberInput
                     id="creatine-loading-dose"
-                    type="number"
-                    value={form.loadingDose}
-                    onChange={(e) => setForm((f) => ({ ...f, loadingDose: e.target.value }))}
+                    value={form.loadingDose === "" ? null : parseFloat(form.loadingDose)}
+                    onValueChange={(v) => setForm((f) => ({ ...f, loadingDose: v == null ? "" : String(v) }))}
+                    min={0}
+                    max={50}
+                    step={1}
+                    decimals={1}
+                    placeholder="20"
                   />
                 </div>
               )}
               <div className="space-y-1.5">
                 <Label htmlFor="creatine-maint-dose">Maintenance dose (g/day)</Label>
-                <Input
+                <NumberInput
                   id="creatine-maint-dose"
-                  type="number"
-                  value={form.maintenanceDose}
-                  onChange={(e) => setForm((f) => ({ ...f, maintenanceDose: e.target.value }))}
+                  value={form.maintenanceDose === "" ? null : parseFloat(form.maintenanceDose)}
+                  onValueChange={(v) => setForm((f) => ({ ...f, maintenanceDose: v == null ? "" : String(v) }))}
+                  min={0}
+                  max={50}
+                  step={0.5}
+                  decimals={1}
+                  placeholder="5"
                 />
               </div>
             </div>

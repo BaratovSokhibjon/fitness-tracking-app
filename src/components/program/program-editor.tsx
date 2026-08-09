@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateProgram, deleteProgram, activateProgram } from "@/actions/program";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NumberInput } from "@/components/ui/number-input";
 import type { ProgressionType } from "@prisma/client";
 
 type ProgramEditorData = {
@@ -76,13 +77,15 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="program-weeks">Duration (weeks)</Label>
-          <Input
+          <NumberInput
             id="program-weeks"
-            type="number"
+            value={durationWeeks}
+            onValueChange={(v) => setDurationWeeks(v ?? 1)}
             min={1}
             max={52}
-            value={durationWeeks}
-            onChange={(e) => setDurationWeeks(parseInt(e.target.value) || 1)}
+            step={1}
+            decimals={0}
+            placeholder="8"
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -101,14 +104,15 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="program-round">Weight rounding (kg)</Label>
-            <Input
+            <NumberInput
               id="program-round"
-              type="number"
-              step={0.5}
+              value={roundTo}
+              onValueChange={(v) => setRoundTo(v ?? 2.5)}
               min={0}
               max={100}
-              value={roundTo}
-              onChange={(e) => setRoundTo(parseFloat(e.target.value) || 2.5)}
+              step={0.5}
+              decimals={1}
+              placeholder="2.5"
             />
           </div>
         </div>

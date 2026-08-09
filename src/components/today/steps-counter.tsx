@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Footprints } from "@phosphor-icons/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Progress } from "@/components/ui/progress";
 import { percent } from "@/lib/utils";
 import { updateSteps } from "@/actions/water-steps";
@@ -36,14 +36,15 @@ export function StepsCounter({ date, steps, target }: { date: string; steps: num
       <CardContent className="space-y-3">
         <Progress value={percent(stepsNum, target)} />
         <div className="flex gap-2">
-          <Input
-            inputMode="numeric"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={save}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
+          <NumberInput
+            value={value === "" ? null : parseFloat(value)}
+            onValueChange={(v) => setValue(v == null ? "" : String(v))}
+            onCommit={save}
+            min={0}
+            max={100000}
+            step={500}
+            decimals={0}
+            placeholder="10000"
           />
         </div>
       </CardContent>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BowlFood, Plus, Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getMealTemplates, createMealTemplate, deleteMealTemplate, logMealTemplate, searchFoods } from "@/actions/foods";
 
@@ -159,17 +160,20 @@ export function MealsButton({ date }: { date: string }) {
                     <div key={i.foodItemId} className="flex items-center justify-between gap-2 text-sm">
                       <span className="min-w-0 truncate">{i.name}</span>
                       <div className="flex shrink-0 items-center gap-1">
-                        <Input
+                        <NumberInput
+                          compact
                           className="h-8 w-20"
-                          type="number"
-                          step="0.1"
-                          min="0.1"
-                          value={i.quantity}
-                          onChange={(e) =>
+                          value={i.quantity === "" ? null : parseFloat(i.quantity)}
+                          onValueChange={(v) =>
                             setItems((prev) =>
-                              prev.map((p) => (p.foodItemId === i.foodItemId ? { ...p, quantity: e.target.value } : p))
+                              prev.map((p) => (p.foodItemId === i.foodItemId ? { ...p, quantity: v == null ? "" : String(v) } : p))
                             )
                           }
+                          min={0.1}
+                          max={100}
+                          step={0.5}
+                          decimals={1}
+                          placeholder="1"
                         />
                         <Button
                           variant="ghost"

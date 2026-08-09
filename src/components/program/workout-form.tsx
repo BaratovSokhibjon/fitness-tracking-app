@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NumberInput } from "@/components/ui/number-input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   createWorkout,
@@ -351,30 +352,84 @@ export function WorkoutForm({
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="space-y-1.5">
                           <Label htmlFor={`edit-sets-${ex.id}`}>Sets</Label>
-                          <Input id={`edit-sets-${ex.id}`} inputMode="numeric" value={editSets} onChange={(e) => setEditSets(e.target.value)} />
+                          <NumberInput
+                            id={`edit-sets-${ex.id}`}
+                            value={editSets === "" ? null : parseFloat(editSets)}
+                            onValueChange={(v) => setEditSets(v == null ? "" : String(v))}
+                            min={1}
+                            max={20}
+                            step={1}
+                            decimals={0}
+                            placeholder="3"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <Label htmlFor={`edit-min-${ex.id}`}>{ex.type === "TIMED" ? "Min s" : "Min reps"}</Label>
-                          <Input id={`edit-min-${ex.id}`} inputMode="numeric" value={editMinReps} onChange={(e) => setEditMinReps(e.target.value)} />
+                          <NumberInput
+                            id={`edit-min-${ex.id}`}
+                            value={editMinReps === "" ? null : parseFloat(editMinReps)}
+                            onValueChange={(v) => setEditMinReps(v == null ? "" : String(v))}
+                            min={1}
+                            max={200}
+                            step={1}
+                            decimals={0}
+                            placeholder="8"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <Label htmlFor={`edit-max-${ex.id}`}>{ex.type === "TIMED" ? "Max s" : "Max reps"}</Label>
-                          <Input id={`edit-max-${ex.id}`} inputMode="numeric" value={editMaxReps} onChange={(e) => setEditMaxReps(e.target.value)} />
+                          <NumberInput
+                            id={`edit-max-${ex.id}`}
+                            value={editMaxReps === "" ? null : parseFloat(editMaxReps)}
+                            onValueChange={(v) => setEditMaxReps(v == null ? "" : String(v))}
+                            min={1}
+                            max={200}
+                            step={1}
+                            decimals={0}
+                            placeholder="12"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <Label htmlFor={`edit-rest-${ex.id}`}>Rest (s)</Label>
-                          <Input id={`edit-rest-${ex.id}`} inputMode="numeric" value={editRestTime} onChange={(e) => setEditRestTime(e.target.value)} placeholder="90" />
+                          <NumberInput
+                            id={`edit-rest-${ex.id}`}
+                            value={editRestTime === "" ? null : parseFloat(editRestTime)}
+                            onValueChange={(v) => setEditRestTime(v == null ? "" : String(v))}
+                            min={0}
+                            max={600}
+                            step={15}
+                            decimals={0}
+                            placeholder="90"
+                          />
                         </div>
                       </div>
                       {ex.type === "WEIGHTED" && (
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div className="space-y-1.5">
                             <Label htmlFor={`edit-sw-${ex.id}`}>Start weight (kg)</Label>
-                            <Input id={`edit-sw-${ex.id}`} inputMode="decimal" value={editStartWeight} onChange={(e) => setEditStartWeight(e.target.value)} placeholder="80" />
+                            <NumberInput
+                              id={`edit-sw-${ex.id}`}
+                              value={editStartWeight === "" ? null : parseFloat(editStartWeight)}
+                              onValueChange={(v) => setEditStartWeight(v == null ? "" : String(v))}
+                              min={0}
+                              max={1000}
+                              step={2.5}
+                              decimals={1}
+                              placeholder="80"
+                            />
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor={`edit-tw-${ex.id}`}>Target weight (kg)</Label>
-                            <Input id={`edit-tw-${ex.id}`} inputMode="decimal" value={editTargetWeight} onChange={(e) => setEditTargetWeight(e.target.value)} placeholder="90" />
+                            <NumberInput
+                              id={`edit-tw-${ex.id}`}
+                              value={editTargetWeight === "" ? null : parseFloat(editTargetWeight)}
+                              onValueChange={(v) => setEditTargetWeight(v == null ? "" : String(v))}
+                              min={0}
+                              max={1000}
+                              step={2.5}
+                              decimals={1}
+                              placeholder="90"
+                            />
                           </div>
                         </div>
                       )}
@@ -487,15 +542,42 @@ export function WorkoutForm({
                 <div className="grid gap-3 border-t pt-3 sm:grid-cols-[5rem_5rem_5rem_auto] sm:items-end">
                   <div className="space-y-1.5">
                     <Label htmlFor="ex-sets">Sets</Label>
-                    <Input id="ex-sets" inputMode="numeric" value={sets} onChange={(e) => setSets(e.target.value)} />
+                    <NumberInput
+                      id="ex-sets"
+                      value={sets === "" ? null : parseFloat(sets)}
+                      onValueChange={(v) => setSets(v == null ? "" : String(v))}
+                      min={1}
+                      max={20}
+                      step={1}
+                      decimals={0}
+                      placeholder="3"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="ex-min">{picked.type === "TIMED" ? "Min s" : "Min reps"}</Label>
-                    <Input id="ex-min" inputMode="numeric" value={minReps} onChange={(e) => setMinReps(e.target.value)} />
+                    <NumberInput
+                      id="ex-min"
+                      value={minReps === "" ? null : parseFloat(minReps)}
+                      onValueChange={(v) => setMinReps(v == null ? "" : String(v))}
+                      min={1}
+                      max={200}
+                      step={1}
+                      decimals={0}
+                      placeholder="8"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="ex-max">{picked.type === "TIMED" ? "Max s" : "Max reps"}</Label>
-                    <Input id="ex-max" inputMode="numeric" value={maxReps} onChange={(e) => setMaxReps(e.target.value)} />
+                    <NumberInput
+                      id="ex-max"
+                      value={maxReps === "" ? null : parseFloat(maxReps)}
+                      onValueChange={(v) => setMaxReps(v == null ? "" : String(v))}
+                      min={1}
+                      max={200}
+                      step={1}
+                      decimals={0}
+                      placeholder="12"
+                    />
                   </div>
                   <Button onClick={handleAddExercise} disabled={!picked}>
                     Add
@@ -505,17 +587,44 @@ export function WorkoutForm({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="ex-start-weight">Start weight (kg)</Label>
-                      <Input id="ex-start-weight" inputMode="decimal" value={startWeight} onChange={(e) => setStartWeight(e.target.value)} placeholder="80" />
+                      <NumberInput
+                        id="ex-start-weight"
+                        value={startWeight === "" ? null : parseFloat(startWeight)}
+                        onValueChange={(v) => setStartWeight(v == null ? "" : String(v))}
+                        min={0}
+                        max={1000}
+                        step={2.5}
+                        decimals={1}
+                        placeholder="80"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="ex-target-weight">Target weight (kg)</Label>
-                      <Input id="ex-target-weight" inputMode="decimal" value={targetWeight} onChange={(e) => setTargetWeight(e.target.value)} placeholder="90" />
+                      <NumberInput
+                        id="ex-target-weight"
+                        value={targetWeight === "" ? null : parseFloat(targetWeight)}
+                        onValueChange={(v) => setTargetWeight(v == null ? "" : String(v))}
+                        min={0}
+                        max={1000}
+                        step={2.5}
+                        decimals={1}
+                        placeholder="90"
+                      />
                     </div>
                   </div>
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="ex-rest">Rest (s)</Label>
-                  <Input id="ex-rest" inputMode="numeric" value={restTime} onChange={(e) => setRestTime(e.target.value)} placeholder="90" />
+                  <NumberInput
+                    id="ex-rest"
+                    value={restTime === "" ? null : parseFloat(restTime)}
+                    onValueChange={(v) => setRestTime(v == null ? "" : String(v))}
+                    min={0}
+                    max={600}
+                    step={15}
+                    decimals={0}
+                    placeholder="90"
+                  />
                 </div>
               </>
             )}

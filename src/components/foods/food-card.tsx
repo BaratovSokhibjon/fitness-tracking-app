@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NumberInput } from "@/components/ui/number-input";
 import { createFood, updateFood, deleteFood } from "@/actions/foods";
 
 export type FoodCategory = "PROTEIN" | "CARBS" | "FATS" | "MEAL" | "SNACK" | "DRINK" | "OTHER";
@@ -62,6 +63,10 @@ export function FoodForm({ onDone, food }: { onDone: () => void; food?: FoodData
     return (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [key]: e.target.value }));
   }
 
+  function numChange(key: keyof typeof form) {
+    return (v: number | null) => setForm((f) => ({ ...f, [key]: v == null ? "" : String(v) }));
+  }
+
   function num(v: string): number {
     const n = parseFloat(v);
     return Number.isNaN(n) ? 0 : n;
@@ -96,7 +101,16 @@ export function FoodForm({ onDone, food }: { onDone: () => void; food?: FoodData
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="food-serving">Serving size</Label>
-          <Input id="food-serving" type="number" step="0.1" value={form.servingSize} onChange={set("servingSize")} />
+          <NumberInput
+            id="food-serving"
+            value={form.servingSize === "" ? null : parseFloat(form.servingSize)}
+            onValueChange={numChange("servingSize")}
+            min={0}
+            max={10000}
+            step={1}
+            decimals={1}
+            placeholder="100"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="food-unit">Unit</Label>
@@ -106,7 +120,16 @@ export function FoodForm({ onDone, food }: { onDone: () => void; food?: FoodData
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="food-cal">Calories / serving</Label>
-          <Input id="food-cal" type="number" value={form.caloriesPerServing} onChange={set("caloriesPerServing")} />
+          <NumberInput
+            id="food-cal"
+            value={form.caloriesPerServing === "" ? null : parseFloat(form.caloriesPerServing)}
+            onValueChange={numChange("caloriesPerServing")}
+            min={0}
+            max={10000}
+            step={10}
+            decimals={0}
+            placeholder="165"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="food-cat">Category</Label>
@@ -127,15 +150,42 @@ export function FoodForm({ onDone, food }: { onDone: () => void; food?: FoodData
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="food-protein">Protein (g)</Label>
-          <Input id="food-protein" type="number" step="0.1" value={form.proteinPerServing} onChange={set("proteinPerServing")} />
+          <NumberInput
+            id="food-protein"
+            value={form.proteinPerServing === "" ? null : parseFloat(form.proteinPerServing)}
+            onValueChange={numChange("proteinPerServing")}
+            min={0}
+            max={500}
+            step={1}
+            decimals={1}
+            placeholder="31"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="food-carbs">Carbs (g)</Label>
-          <Input id="food-carbs" type="number" step="0.1" value={form.carbsPerServing} onChange={set("carbsPerServing")} />
+          <NumberInput
+            id="food-carbs"
+            value={form.carbsPerServing === "" ? null : parseFloat(form.carbsPerServing)}
+            onValueChange={numChange("carbsPerServing")}
+            min={0}
+            max={500}
+            step={1}
+            decimals={1}
+            placeholder="0"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="food-fat">Fat (g)</Label>
-          <Input id="food-fat" type="number" step="0.1" value={form.fatPerServing} onChange={set("fatPerServing")} />
+          <NumberInput
+            id="food-fat"
+            value={form.fatPerServing === "" ? null : parseFloat(form.fatPerServing)}
+            onValueChange={numChange("fatPerServing")}
+            min={0}
+            max={500}
+            step={1}
+            decimals={1}
+            placeholder="3.6"
+          />
         </div>
       </div>
       <DialogFooter>
