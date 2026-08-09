@@ -8,6 +8,7 @@ import {
   ChartLine,
   Crosshair,
   ForkKnife,
+  Gauge,
   GearSix,
   House,
   Pulse,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Today", icon: House },
+  { href: "/dashboard", label: "Dashboard", icon: Gauge },
   { href: "/history", label: "History", icon: ChartLine },
   { href: "/calendar", label: "Calendar", icon: CalendarDots },
   { href: "/program", label: "Program", icon: Barbell },

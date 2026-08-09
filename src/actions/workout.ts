@@ -106,3 +106,21 @@ export async function deleteExercise(id: string) {
   revalidatePath("/");
   return { ok: true };
 }
+
+// Creates a real WorkoutExercise row for an unplanned exercise added mid-session,
+// so ExerciseLogs can reference it via the FK. Appended at the end of the template.
+export async function createSessionExercise(workoutId: string, exerciseId: string) {
+  const exercise = await prisma.workoutExercise.create({
+    data: {
+      workoutId,
+      exerciseId,
+      sets: 1,
+      minReps: 1,
+      maxReps: 20,
+      sortOrder: 999,
+    },
+  });
+  revalidatePath("/program");
+  revalidatePath("/");
+  return exercise;
+}

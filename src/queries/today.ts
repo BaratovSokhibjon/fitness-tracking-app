@@ -11,7 +11,7 @@ export async function getTodayData() {
   const weekStart = startOfWeek(today, { weekStartsOn: WEEK_STARTS_ON });
   const weekEnd = endOfWeek(today, { weekStartsOn: WEEK_STARTS_ON });
 
-  const [profile, todayCheckIn, todaySchedule, yesterdayCheckIn, todayHabits, weekSchedules] =
+  const [profile, todayCheckIn, todaySchedule, yesterdayCheckIn, todayHabits, weekSchedules, activeProgram] =
     await Promise.all([
       prisma.profile.findFirst(),
       prisma.dailyCheckIn.findUnique({ where: { date: today } }),
@@ -52,10 +52,35 @@ export async function getTodayData() {
           date: { gte: weekStart, lte: weekEnd },
         },
       }),
+      prisma.program.findFirst({
+        where: { isActive: true },
+        select: {
+          workouts: {
+            select: {
+              exercises: {
+                select: {
+                  startWeight: true,
+                  exercise: { select: { type: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
     ]);
 
   const weeklyCompleted = weekSchedules.filter((s) => s.status === "COMPLETED").length;
   const weeklyTotal = weekSchedules.filter((s) => s.status !== "REST").length;
+
+  const hasActiveProgram = Boolean(activeProgram);
+  const hasWorkouts = Boolean(activeProgram && activeProgram.workouts.length > 0);
+  const hasExercises = Boolean(
+    activeProgram?.workouts.some((w) => w.exercises.length > 0)
+  );
+  // Weighted-exercise check: a program with no weighted exercises at all is
+  // considered complete (nothing to set weights on).
+  const allWeighted = activeProgram?.workouts.flatMap((w) => w.exercises).filter((e) => e.exercise.type === "WEIGHTED") ?? [];
+  const hasWeightedTargets = allWeighted.length === 0 || allWeighted.some((e) => e.startWeight != null);
 
   const creatineEnabled = profile?.creatineEnabled ?? false;
   let creatine = null;
@@ -119,5 +144,12 @@ export async function getTodayData() {
     todaySteps: todayCheckIn?.steps ?? 0,
     profile,
     creatine,
+    onboarding: {
+      hasProfile: Boolean(profile),
+      hasActiveProgram,
+      hasWorkouts,
+      hasExercises,
+      hasWeightedTargets,
+    },
   };
 }

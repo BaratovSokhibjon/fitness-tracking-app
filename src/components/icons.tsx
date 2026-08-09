@@ -1,6 +1,7 @@
 "use client";
 
 export {
+  ArrowRight,
   Barbell,
   CalendarCheck,
   CalendarDots,

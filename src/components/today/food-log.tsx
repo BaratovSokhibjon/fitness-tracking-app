@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { categoryLabels } from "@/components/foods/food-card";
 import { addFoodToLog, removeFoodFromLog, getFoodLogForDate, searchFoods } from "@/actions/foods";
+import { TargetProgress } from "@/components/today/target-progress";
 
 export type FoodLogEntry = {
   id: string;
@@ -113,7 +114,18 @@ export function FoodSelector({ date }: { date: string }) {
   );
 }
 
-export function FoodLogSection({ date }: { date: string }) {
+export function FoodLogSection({
+  date,
+  targets,
+}: {
+  date: string;
+  targets?: {
+    calories: number | null | undefined;
+    protein: number | null | undefined;
+    carbs: number | null | undefined;
+    fat: number | null | undefined;
+  };
+}) {
   const router = useRouter();
   const [entries, setEntries] = useState<FoodLogEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -169,6 +181,13 @@ export function FoodLogSection({ date }: { date: string }) {
             <p className="font-mono text-sm font-semibold tabular-nums">{Math.round(totals.fat)}g</p>
             <p className="text-xs text-muted-foreground">fat</p>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <TargetProgress label="Calories" current={totals.calories} target={targets?.calories} unit="kcal" />
+          <TargetProgress label="Protein" current={totals.protein} target={targets?.protein} unit="g" />
+          <TargetProgress label="Carbs" current={totals.carbs} target={targets?.carbs} unit="g" />
+          <TargetProgress label="Fat" current={totals.fat} target={targets?.fat} unit="g" />
         </div>
 
         {entries.length === 0 ? (

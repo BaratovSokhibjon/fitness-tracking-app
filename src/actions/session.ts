@@ -23,18 +23,25 @@ export async function startSession(scheduleId: string) {
     return schedule.session;
   }
 
-  const session = await prisma.workoutSession.create({
-    data: {
-      scheduleId,
-      workoutId: schedule.workout.id,
-      date: startOfDay(schedule.date),
-      startedAt: new Date(),
-    },
-  });
-
-  revalidatePath("/");
-  revalidatePath(`/workout/${scheduleId}`);
-  return session;
+  try {
+    const session = await prisma.workoutSession.create({
+      data: {
+        scheduleId,
+        workoutId: schedule.workout.id,
+        date: startOfDay(schedule.date),
+        startedAt: new Date(),
+      },
+    });
+    revalidatePath("/");
+    revalidatePath(`/workout/${scheduleId}`);
+    return session;
+  } catch (e) {
+    // Two concurrent calls can both pass the initial findUnique. Treat a unique
+    // violation on scheduleId as "already created" and return the existing row.
+    const existing = await prisma.workoutSession.findUnique({ where: { scheduleId } });
+    if (existing) return existing;
+    throw e;
+  }
 }
 
 export async function logSet(input: LogSetInput) {
@@ -75,6 +82,19 @@ export async function logSet(input: LogSetInput) {
 
   revalidatePath(`/workout/${data.scheduleId}`);
   return log;
+}
+
+export async function deleteSetLog(scheduleId: string, exerciseId: string, setNumber: number) {
+  const schedule = await prisma.workoutSchedule.findUnique({
+    where: { id: scheduleId },
+    include: { session: true },
+  });
+  if (!schedule?.session) return { ok: true };
+  await prisma.exerciseLog.deleteMany({
+    where: { sessionId: schedule.session.id, exerciseId, setNumber },
+  });
+  revalidatePath(`/workout/${scheduleId}`);
+  return { ok: true };
 }
 
 export async function completeSession(input: SessionInput) {

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
 import { saveQuickCheckIn, saveNutrition } from "@/actions/check-in";
+import { TargetProgress } from "@/components/today/target-progress";
 
 type Initial = {
   morningWeight: number | null | undefined;
@@ -23,7 +24,23 @@ type Initial = {
   notes: string;
 };
 
-export function QuickCheckIn({ date, initial }: { date: string; initial: Initial }) {
+type Targets = {
+  calories: number | null | undefined;
+  protein: number | null | undefined;
+  carbs: number | null | undefined;
+  fat: number | null | undefined;
+  sleep: number | null | undefined;
+};
+
+export function QuickCheckIn({
+  date,
+  initial,
+  targets,
+}: {
+  date: string;
+  initial: Initial;
+  targets: Targets;
+}) {
   const [weight, setWeight] = useState<number | null>(initial.morningWeight ?? null);
   const [sleep, setSleep] = useState<number | null>(initial.sleepHours ?? null);
   const [energy, setEnergy] = useState(initial.energy ?? 5);
@@ -98,7 +115,14 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="sleep">Sleep (hours)</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sleep">Sleep (hours)</Label>
+              {targets.sleep != null && targets.sleep > 0 && (
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  target {targets.sleep}h
+                </span>
+              )}
+            </div>
             <NumberInput
               id="sleep"
               value={sleep}
@@ -159,6 +183,12 @@ export function QuickCheckIn({ date, initial }: { date: string; initial: Initial
                 <p className="font-mono text-sm font-semibold tabular-nums">{initial.fat != null ? `${Math.round(initial.fat)}g` : "—"}</p>
                 <p className="text-xs text-muted-foreground">fat</p>
               </div>
+            </div>
+            <div className="space-y-2">
+              <TargetProgress label="Calories" current={initial.calories} target={targets.calories} unit="kcal" />
+              <TargetProgress label="Protein" current={initial.protein} target={targets.protein} unit="g" />
+              <TargetProgress label="Carbs" current={initial.carbs} target={targets.carbs} unit="g" />
+              <TargetProgress label="Fat" current={initial.fat} target={targets.fat} unit="g" />
             </div>
             <p className="text-xs text-muted-foreground">
               Totals are calculated from your logged foods. Use the Meal Log below to add what you ate.

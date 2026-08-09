@@ -3,13 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { CheckCircle, Timer } from "@phosphor-icons/react";
+import { CheckCircle, Plus, Timer, Trash, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { logSet, startSession, completeSession } from "@/actions/session";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { logSet, startSession, completeSession, deleteSetLog } from "@/actions/session";
+import { searchExerciseLibrary, createSessionExercise, deleteExercise } from "@/actions/workout";
 import { epley1RM } from "@/lib/utils";
 import type { ExerciseHistoryRow } from "@/queries/records";
 import type { WeekSchemeResult } from "@/lib/progression";
@@ -75,6 +78,10 @@ export function WorkoutSession({
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<SessionComparison[] | null>(null);
   const [prNames, setPrNames] = useState<string[]>([]);
+  const [extraExercises, setExtraExercises] = useState<Exercise[]>([]);
+  const [extraOpen, setExtraOpen] = useState(false);
+  const [extraQuery, setExtraQuery] = useState("");
+  const [extraResults, setExtraResults] = useState<Awaited<ReturnType<typeof searchExerciseLibrary>>>([]);
 
   // Rest timer state
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
@@ -84,9 +91,12 @@ export function WorkoutSession({
   const [sets, setSets] = useState<Record<string, SetState[]>>(() => {
     const map: Record<string, SetState[]> = {};
     for (const ex of exercises) {
+      const exLogs = existingLogs.filter((l) => l.exerciseId === ex.id);
+      const maxLoggedSet = exLogs.reduce((m, l) => Math.max(m, l.setNumber), 0);
+      const rowCount = Math.max(ex.sets, maxLoggedSet);
       const rows: SetState[] = [];
-      for (let i = 0; i < ex.sets; i++) {
-        const log = existingLogs.find((l) => l.exerciseId === ex.id && l.setNumber === i + 1);
+      for (let i = 0; i < rowCount; i++) {
+        const log = exLogs.find((l) => l.setNumber === i + 1);
         const schemeWeight = ex.scheme?.weights?.[i] ?? null;
         rows.push({
           weight: log?.weight ?? schemeWeight,
@@ -181,8 +191,9 @@ export function WorkoutSession({
       await logSet({ scheduleId, ...buildLog(exercise, row, index + 1) });
     })();
 
-    // Auto-start rest timer after the last logged set unless it's the final set.
-    if (index < exercise.sets - 1 && exercise.restTime) {
+    // Auto-start rest timer after each logged set, except the last row currently shown.
+    const rowCount = sets[exercise.id]?.length ?? exercise.sets;
+    if (index < rowCount - 1 && exercise.restTime) {
       startRestTimer(exercise.restTime);
     }
   }
@@ -192,6 +203,60 @@ export function WorkoutSession({
     if (row.reps == null && row.durationSec == null) return;
     await startSession(scheduleId);
     await logSet({ scheduleId, ...buildLog(exercise, { ...row, rpe }, index + 1) });
+  }
+
+  function addSet(exerciseId: string) {
+    setSets((prev) => ({
+      ...prev,
+      [exerciseId]: [...(prev[exerciseId] ?? []), { weight: null, reps: null, durationSec: null, rpe: "" }],
+    }));
+  }
+
+  function removeSet(exerciseId: string, index: number) {
+    // Only the last row may be removed — deleting a middle row would renumber
+    // the remaining rows and orphan the server-side logs for higher set numbers.
+    const rows = sets[exerciseId] ?? [];
+    if (index !== rows.length - 1) return;
+    if (rows.length <= 1) return;
+    setSets((prev) => {
+      const next = { ...prev };
+      next[exerciseId] = rows.filter((_, i) => i !== index);
+      return next;
+    });
+    void startSession(scheduleId).then(() =>
+      deleteSetLog(scheduleId, exerciseId, index + 1)
+    );
+  }
+
+  async function searchExtraExercises(q: string) {
+    setExtraQuery(q);
+    const res = await searchExerciseLibrary(q);
+    setExtraResults(res);
+  }
+
+  async function addExtraExercise(libEx: (typeof extraResults)[number]) {
+    // Persist a real WorkoutExercise row so ExerciseLogs can reference it via FK.
+    const created = await createSessionExercise(workoutId, libEx.id);
+    const newEx: Exercise = {
+      id: created.id,
+      name: libEx.name,
+      type: libEx.type as ExerciseType,
+      sets: 1,
+      minReps: 1,
+      maxReps: 20,
+      restTime: null,
+      notes: null,
+      mediaUrl: null,
+      scheme: null,
+    };
+    setExtraExercises((prev) => [...prev, newEx]);
+    setSets((prev) => ({
+      ...prev,
+      [newEx.id]: [{ weight: null, reps: null, durationSec: null, rpe: "" }],
+    }));
+    setExtraOpen(false);
+    setExtraQuery("");
+    setExtraResults([]);
   }
 
   function formatElapsed(seconds: number) {
@@ -209,8 +274,9 @@ export function WorkoutSession({
   async function handleComplete() {
     setSaving(true);
     stopRestTimer();
-    const logs = exercises.flatMap((ex) =>
-      sets[ex.id]
+    const allExercises = [...exercises, ...extraExercises];
+    const logs = allExercises.flatMap((ex) =>
+      (sets[ex.id] ?? [])
         .map((row, i) => {
           const reps = ex.type !== "TIMED" ? row.reps : null;
           const duration = ex.type === "TIMED" ? row.durationSec : null;
@@ -228,19 +294,21 @@ export function WorkoutSession({
         duration: Math.max(1, Math.round(elapsed / 60)),
         exerciseLogs: logs,
       });
-    } else {
+    } else if (allExercises.length > 0) {
       await completeSession({
         scheduleId,
         workoutId,
         date,
         duration: Math.max(1, Math.round(elapsed / 60)),
-        exerciseLogs: [{ exerciseId: exercises[0]?.id ?? "", setNumber: 1, reps: null }],
+        exerciseLogs: [{ exerciseId: allExercises[0].id, setNumber: 1, reps: null }],
       });
+    } else {
+      // No exercises at all — nothing to log, mark complete anyway.
     }
 
-    const comparison = compareSession(sets, exercises);
+    const comparison = compareSession(sets, allExercises);
     const prsAchieved: string[] = [];
-    for (const ex of exercises) {
+    for (const ex of allExercises) {
       const pr = prs[ex.id];
       const rows = sets[ex.id] ?? [];
       const gotPR = rows.some((row) => {
@@ -420,6 +488,16 @@ export function WorkoutSession({
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         {i + 1}
                         {isPR && <Badge variant="success" className="text-[10px] leading-4">PR</Badge>}
+                        {i >= ex.sets && i === (sets[ex.id]?.length ?? 0) - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeSet(ex.id, i)}
+                            className="text-mute hover:text-sale"
+                            aria-label={`Remove set ${i + 1} for ${ex.name}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
                       {ex.type === "TIMED" ? (
                         <NumberInput
@@ -498,10 +576,197 @@ export function WorkoutSession({
                   </div>
                 </div>
               )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={() => addSet(ex.id)}
+                disabled={completed}
+              >
+                <Plus className="h-4 w-4" />
+                Add set
+              </Button>
             </CardContent>
         </Card>
       );
     })}
+
+      {extraExercises.map((ex) => (
+        <Card key={ex.id} className="border-dashed">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="flex items-center gap-2">
+                {ex.name}
+                <Badge variant="secondary">extra</Badge>
+              </span>
+              <Badge variant="secondary">1+ sets</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={
+                ex.type === "WEIGHTED"
+                  ? "grid grid-cols-[2rem_1fr_1fr_1fr] gap-2"
+                  : "grid grid-cols-[2rem_1fr_1fr] gap-2"
+              }
+            >
+              <div className="text-xs font-medium text-muted-foreground">Set</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                {ex.type === "TIMED" ? "Time" : "Reps"}
+              </div>
+              {ex.type === "WEIGHTED" && (
+                <div className="text-xs font-medium text-muted-foreground">Weight</div>
+              )}
+              <div className="text-xs font-medium text-muted-foreground">RPE</div>
+
+              {sets[ex.id]?.map((row, i) => (
+                <div key={i} className="contents">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {i + 1}
+                    {i === (sets[ex.id]?.length ?? 0) - 1 && i > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeSet(ex.id, i)}
+                        className="text-mute hover:text-sale"
+                        aria-label={`Remove set ${i + 1} for ${ex.name}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  {ex.type === "TIMED" ? (
+                    <NumberInput
+                      value={row.durationSec}
+                      onValueChange={(v) => updateNumeric(ex.id, i, "durationSec", v)}
+                      onCommit={() => finishSet(ex, i)}
+                      min={0}
+                      step={5}
+                      decimals={0}
+                      placeholder="sec"
+                      aria-label={`${ex.name} set ${i + 1} duration`}
+                    />
+                  ) : (
+                    <NumberInput
+                      value={row.reps}
+                      onValueChange={(v) => updateNumeric(ex.id, i, "reps", v)}
+                      onCommit={() => finishSet(ex, i)}
+                      min={0}
+                      step={1}
+                      decimals={0}
+                      placeholder="reps"
+                      aria-label={`${ex.name} set ${i + 1} reps`}
+                    />
+                  )}
+                  {ex.type === "WEIGHTED" && (
+                    <NumberInput
+                      value={row.weight}
+                      onValueChange={(v) => updateNumeric(ex.id, i, "weight", v)}
+                      onCommit={() => finishSet(ex, i)}
+                      min={0}
+                      step={2.5}
+                      decimals={1}
+                      placeholder="kg"
+                      aria-label={`${ex.name} set ${i + 1} weight`}
+                    />
+                  )}
+                  <Select
+                    value={row.rpe}
+                    onValueChange={(v) => {
+                      updateSet(ex.id, i, "rpe", v);
+                      void saveSetValues(ex, i, v);
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="RPE" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rpe) => (
+                        <SelectItem key={rpe} value={String(rpe)}>
+                          {rpe}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={() => addSet(ex.id)}
+              disabled={completed}
+            >
+              <Plus className="h-4 w-4" />
+              Add set
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 text-destructive"
+              onClick={async () => {
+                try {
+                  await deleteExercise(ex.id);
+                } catch {
+                  // Exercise has logged sets — row stays in the template but is
+                  // hidden from this session's UI.
+                }
+                setExtraExercises((prev) => prev.filter((e) => e.id !== ex.id));
+                setSets((prev) => {
+                  const next = { ...prev };
+                  delete next[ex.id];
+                  return next;
+                });
+              }}
+              disabled={completed}
+            >
+              <Trash className="h-4 w-4" />
+              Remove exercise
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+
+      <Dialog open={extraOpen} onOpenChange={setExtraOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full" disabled={completed}>
+            <Plus className="h-4 w-4" />
+            Add exercise
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Exercise</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Search exercise library…"
+              value={extraQuery}
+              onChange={(e) => void searchExtraExercises(e.target.value)}
+            />
+            <div className="max-h-72 space-y-1.5 overflow-y-auto">
+              {extraResults.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Type to search your exercise library.</p>
+              ) : (
+                extraResults.map((libEx) => (
+                  <button
+                    key={libEx.id}
+                    type="button"
+                    onClick={() => addExtraExercise(libEx)}
+                    className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm hover:bg-accent"
+                  >
+                    <span className="font-medium">{libEx.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {libEx.type === "BODYWEIGHT" ? "bodyweight" : libEx.type === "TIMED" ? "timed" : "weighted"}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-end">
         <Button size="lg" onClick={completed ? () => { router.push("/"); router.refresh(); } : handleComplete} disabled={saving}>
