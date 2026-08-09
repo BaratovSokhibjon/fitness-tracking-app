@@ -53,12 +53,13 @@ The user opens the app and lands on **Today** — one page with workout, quick c
 - Workout calendar (auto-schedule from templates)
 - History page (weight, calories, protein, sleep trends)
 - Profile (targets & baselines)
+- Goals (target weight, pull-up target, sleep target, etc.)
+- Weekly review (auto-summary)
 
 ### Phase 2
 - Food database & meal logging (create food items, log meals, auto-calculate macros)
 - Body measurements tracking
 - Progress photo uploads
-- Weekly review (auto-summary)
 
 ### Phase 3 (future)
 - Multiple programs

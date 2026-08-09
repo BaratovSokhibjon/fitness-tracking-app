@@ -11,7 +11,7 @@
 | Database | MySQL 8 | Relational, production-ready |
 | ORM | Prisma | Type-safe queries, migrations, seeding |
 | Forms | React Hook Form + Zod | Client validation + server validation from same schemas |
-| Charts | Recharts (via ChatCM UI) | Dashboard charts from pre-built components |
+| Charts | Recharts (via ChatCM UI) | History/trend charts from pre-built components |
 | Calendar | ChatCM UI Calendar | Workout schedule display |
 
 ## Project Folder Structure
@@ -55,14 +55,18 @@ somatix/
 │   │   │       └── page.tsx          # Past workout sessions list
 │   │   │
 │   │   ├── progress/
-│   │   │   ├── page.tsx              # Measurements chart
-│   │   │   └── photos/
-│   │   │       └── page.tsx          # Photo gallery
+│   │   │   └── page.tsx              # Measurements + photos (tabs)
 │   │   │
 │   │   ├── review/
 │   │   │   ├── page.tsx              # Current/latest weekly review
 │   │   │   └── [weekNumber]/
 │   │   │       └── page.tsx          # Specific week review
+│   │   │
+│   │   ├── goals/
+│   │   │   └── page.tsx              # Goal management
+│   │   │
+│   │   ├── foods/                      # Phase 2
+│   │   │   └── page.tsx              # Food library
 │   │   │
 │   │   └── api/
 │   │       └── upload/
@@ -75,6 +79,7 @@ somatix/
 │   ├── actions/                      # Server actions
 │   │   ├── profile.ts
 │   │   ├── check-in.ts
+│   │   ├── water-steps.ts
 │   │   ├── program.ts
 │   │   ├── workout.ts
 │   │   ├── schedule.ts
@@ -82,17 +87,18 @@ somatix/
 │   │   ├── progress.ts
 │   │   ├── habits.ts
 │   │   ├── goals.ts
-│   │   └── review.ts
+│   │   ├── review.ts
+│   │   └── foods.ts                  # Phase 2
 │   │
 │   ├── schemas/                      # Zod validation schemas
 │   │   ├── profile.ts
 │   │   ├── check-in.ts
 │   │   ├── program.ts
-│   │   ├── workout.ts
 │   │   ├── session.ts
 │   │   ├── measurement.ts
 │   │   ├── habit.ts
-│   │   └── goal.ts
+│   │   ├── goal.ts
+│   │   └── food.ts                   # Phase 2
 │   │
 │   ├── queries/                      # Reusable database queries
 │   │   ├── today.ts
@@ -139,14 +145,24 @@ somatix/
 │       ├── progress/
 │       │   ├── measurement-form.tsx
 │       │   ├── measurement-chart.tsx
+│       │   ├── photo-gallery.tsx
 │       │   └── photo-upload.tsx
 │       │
 │       ├── review/
 │       │   └── weekly-summary.tsx
 │       │
-│       └── goals/
-│           ├── goal-card.tsx
-│           └── goal-form.tsx
+│       ├── goals/
+│       │   ├── goal-card.tsx
+│       │   └── goal-form.tsx
+│       │
+│       ├── foods/                      # Phase 2
+│       │   ├── food-search.tsx
+│       │   ├── food-list.tsx
+│       │   ├── food-card.tsx
+│       │   └── food-form.tsx
+│       │
+│       └── profile/
+│           └── profile-form.tsx
 │
 ├── public/
 │   └── uploads/                      # User-uploaded photos

@@ -83,11 +83,13 @@ Use **ChatCM UI pre-built components only**. Do not create custom UI primitives 
 
 # Progress (/progress)
 <ProgressPage>
-├── <Tabs>                           # Measurements / Photos
-│   ├── <MeasurementForm>            # Date + body part inputs
-│   └── <MeasurementChart>           # Line chart per measurement
-└── <PhotoGallery>                   # Grid of photos by date
-    └── <PhotoUpload>                # Drag/drop or file input
+└── <Tabs>                           # Measurements / Photos
+    ├── Measurements tab
+    │   ├── <MeasurementForm>        # Date + body part inputs
+    │   └── <MeasurementChart>       # Line chart per measurement
+    └── Photos tab
+        └── <PhotoGallery>           # Grid of photos by date
+            └── <PhotoUpload>        # Drag/drop or file input
 
 # Weekly Review (/review)
 <ReviewPage>
@@ -109,6 +111,17 @@ Use **ChatCM UI pre-built components only**. Do not create custom UI primitives 
     ├── Calories, protein, carbs, fat per serving
     ├── Category dropdown
     └── Photo upload
+
+# Workout History (/workout/history)
+<WorkoutHistoryPage>                 # Server component
+└── <SessionList>
+    └── <SessionCard>                # Date, workout name, duration, exercises summary
+
+# Profile (/profile)
+<ProfilePage>                        # Client component
+└── <ProfileForm>                    # React Hook Form
+    ├── Height, age, program start date
+    └── Daily targets: calories, protein, carbs, fat, water, steps, sleep
 ```
 
 ## Server vs. Client Components
@@ -133,6 +146,8 @@ Use **ChatCM UI pre-built components only**. Do not create custom UI primitives 
 | `MeasurementForm` | Client | Form inputs |
 | `PhotoUpload` | Client | File input + preview |
 | `GoalForm` / `GoalCard` | Client | Add/edit dialog form |
+| `SessionList` / `SessionCard` | Server | Read-only, fetched from DB |
+| `ProfileForm` | Client | Form inputs for targets |
 | `WeeklySummary` | Server | Read-only, fetches and displays |
 | `Sidebar` | Client | Active route highlighting |
 

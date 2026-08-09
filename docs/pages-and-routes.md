@@ -24,8 +24,8 @@ The user opens the app → lands on Today. Everything needed for *today* is on o
 /calendar                  → Monthly workout calendar
 /workout/[scheduleId]      → Active workout session (log sets)
 /workout/history           → Past completed workout sessions
-/progress                  → Body measurements chart & form
-/progress/photos           → Progress photo gallery
+/progress                  → Body measurements + photos (tabs)
+/workout/history           → Past completed workout sessions
 /review                    → Current/latest weekly review
 /review/[weekNumber]       → Specific week's summary
 /goals                     → Goal management
@@ -39,6 +39,7 @@ Changes from previous design:
 - `/check-in/[date]` removed — past check-ins are viewable from `/history` or `/review`
 - `/login` removed — authentication is out of scope
 - `/habits` removed — habits exist only on the Today page
+- `/progress/photos` removed — photos are a tab on `/progress`
 
 ## Navigation Structure
 
@@ -48,6 +49,7 @@ Today             /
 History           /history
 Calendar          /calendar
 Program           /program
+Workouts          /workout/history
 Progress          /progress
 Review            /review
 Goals             /goals
@@ -300,10 +302,9 @@ Purely read-only. Server component. No forms, no inputs.
 | `/profile` | Edit targets (calories, protein, sleep, steps, water) |
 | `/program/*` | Edit workout templates (add/remove exercises, change sets/reps) |
 | `/calendar` | Monthly view. Click day to see workout details or start a workout |
-| `/workout/[scheduleId]` | Active workout session. Log sets, reps, weight, RPE. After completion: post-workout prompt |
-| `/workout/history` | List of past workout sessions |
-| `/progress` | Body measurements form + line charts |
-| `/progress/photos` | Photo gallery + upload |
+| `/workout/[scheduleId]` | Active workout session. Log sets, reps, weight, RPE. After completion: redirect to Today with post-workout prompt |
+| `/workout/history` | List of past completed workout sessions, clickable to view details |
+| `/progress` | Body measurements (form + charts) and photos (gallery + upload) in tabs |
 | `/review` | Auto-generated weekly summary |
 | `/goals` | CRUD for goals with progress bars |
 
