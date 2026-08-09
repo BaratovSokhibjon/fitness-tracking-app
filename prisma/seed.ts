@@ -85,7 +85,8 @@ async function main() {
   console.log("Seeding...");
 
   // Create the default user from env (fixed id matches the migration backfill).
-  const email = process.env.SEED_EMAIL ?? "admin@somatix.local";
+  // Email is lowercased to match the API's Basic-auth comparison.
+  const email = (process.env.SEED_EMAIL ?? "admin@somatix.local").toLowerCase();
   const password = process.env.SEED_PASSWORD ?? "somatix-dev-password";
   const user = await prisma.user.upsert({
     where: { id: DEFAULT_USER_ID },

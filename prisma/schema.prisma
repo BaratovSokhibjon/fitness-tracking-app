@@ -29,6 +29,20 @@ model User {
   creatineLogs       CreatineLog[]
   deviceTokens       DeviceToken[]
   reminders          Reminder[]
+  idempotencyKeys    IdempotencyKey[]
+}
+
+// Client-supplied idempotency keys so retried sync ops don't double-apply.
+model IdempotencyKey {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String
+  opType    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
 }
 
 model DeviceToken {
