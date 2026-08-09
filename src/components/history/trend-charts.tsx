@@ -25,7 +25,7 @@ export function TrendLineChart({
   description,
   data,
   unit = "",
-  color = "#111111",
+  color = "var(--ink)",
 }: {
   title: string;
   description: string;
@@ -59,7 +59,7 @@ export function TrendBarChart({
   description,
   data,
   unit = "",
-  color = "#111111",
+  color = "var(--ink)",
 }: {
   title: string;
   description: string;
@@ -79,7 +79,7 @@ export function TrendBarChart({
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={55} />
-            <Tooltip formatter={(v) => formatValue(v, unit)} cursor={{ fill: "rgba(0,0,0,0.05)" }} />
+            <Tooltip formatter={(v) => formatValue(v, unit)} cursor={{ fill: "var(--chart-cursor, rgba(0,0,0,0.05))" }} />
             <Bar dataKey="value" fill={color} radius={[2, 2, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

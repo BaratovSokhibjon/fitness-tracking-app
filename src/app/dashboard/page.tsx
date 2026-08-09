@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendLineChart } from "@/components/history/trend-charts";
 import { ExerciseTrends } from "@/components/progress/exercise-trends";
+import { VolumeTrendChart } from "@/components/dashboard/volume-trend";
+import { CorrelationsSection } from "@/components/dashboard/correlations";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +93,7 @@ export default async function DashboardPage() {
           description="Last 90 days of morning weights"
           data={weightChart}
           unit=" kg"
-          color="#111111"
+          color="var(--ink)"
         />
         <Card>
           <CardHeader>
@@ -183,6 +185,14 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <VolumeTrendChart data={data.volumeTrend} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <CorrelationsSection data={data.correlations} />
       </div>
 
       <ExerciseTrends trends={trends} />

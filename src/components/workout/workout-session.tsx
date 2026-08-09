@@ -393,7 +393,7 @@ export function WorkoutSession({
       )}
 
       {restSeconds !== null && (
-        <Card className={restSeconds === 0 ? "border-emerald-300 bg-emerald-50/50" : "border-primary/40"}>
+        <Card className={restSeconds === 0 ? "border-success/40 bg-success/5" : "border-primary/40"}>
           <CardContent className="flex items-center justify-between py-3">
             <div className="flex items-center gap-3">
               <Timer className="h-5 w-5 text-primary" />

@@ -38,7 +38,7 @@ export default async function HistoryPage() {
       <h1 className="text-3xl font-medium text-ink">History</h1>
       <p className="text-sm text-muted-foreground">Last 30 days of check-in trends.</p>
 
-      <TrendLineChart title="Weight Trend" description="Morning weight (kg)" data={weightData} unit=" kg" color="#111111" />
+      <TrendLineChart title="Weight Trend" description="Morning weight (kg)" data={weightData} unit=" kg" color="var(--ink)" />
       <TrendBarChart title="Calories Trend" description="Daily calories" data={caloriesData} unit=" kcal" color="#0a7281" />
       <TrendBarChart title="Protein Trend" description="Daily protein (g)" data={proteinData} unit=" g" color="#007d48" />
       <TrendLineChart title="Sleep Trend" description="Hours of sleep" data={sleepData} unit=" h" color="#1151ff" />

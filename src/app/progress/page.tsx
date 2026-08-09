@@ -40,7 +40,7 @@ export default async function ProgressPage() {
           </p>
         ) : (
           <>
-            <MeasurementChart title="Weight" data={weightData} unit="kg" color="#111111" />
+            <MeasurementChart title="Weight" data={weightData} unit="kg" color="var(--ink)" />
             <MeasurementChart title="Waist" data={waistData} color="#0a7281" />
             <MeasurementChart title="Chest" data={chestData} color="#ed1aa0" />
             <MeasurementChart title="Arms (avg)" data={armsData} color="#007d48" />

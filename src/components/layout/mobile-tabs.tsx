@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const primaryTabs = [
   { href: "/", label: "Today", icon: House },
@@ -117,6 +118,7 @@ export function MobileTabs() {
                         </Link>
                       );
                     })}
+                    {section.label === "Settings" && <ThemeToggle />}
                   </div>
                 </div>
               ))}

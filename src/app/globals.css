@@ -24,6 +24,20 @@
     --input: 45 7% 87%;
     --ring: 0 0% 6.7%;
     --radius: 0.25rem;
+
+    /* Quiet Data Ledger custom palette (light) */
+    --ink: #111111;
+    --canvas: #ffffff;
+    --linen: #f9f8f5;
+    --cloud: #f2f1ec;
+    --soft-cloud: #f2f1ec;
+    --charcoal: #2b2a27;
+    --ash: #4c4b47;
+    --mute: #706f69;
+    --stone: #9e9d96;
+    --hairline: #e3e3dd;
+    --hairline-soft: #ecebe6;
+    --success-bright: #2fc46b;
   }
 
   .dark {
@@ -46,6 +60,21 @@
     --border: 44 5% 18%;
     --input: 44 5% 18%;
     --ring: 0 0% 100%;
+
+    /* Quiet Data Ledger custom palette (dark) — inverted surfaces */
+    --ink: #f2f1ec;
+    --canvas: #0d0d0b;
+    --linen: #141412;
+    --cloud: #1b1a17;
+    --soft-cloud: #1b1a17;
+    --charcoal: #c9c7c0;
+    --ash: #b3b1aa;
+    --mute: #9a9891;
+    --stone: #6b6a64;
+    --hairline: #2a2a27;
+    --hairline-soft: #22221f;
+    --success-bright: #2fc46a;
+    --chart-cursor: rgba(255, 255, 255, 0.06);
   }
 }
 

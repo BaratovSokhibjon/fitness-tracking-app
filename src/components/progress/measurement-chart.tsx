@@ -21,7 +21,7 @@ export function MeasurementChart({
   title,
   data,
   unit = "cm",
-  color = "#111111",
+  color = "var(--ink)",
 }: {
   title: string;
   data: { date: string; value: number | null }[];

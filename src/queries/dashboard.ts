@@ -20,7 +20,7 @@ export async function getDashboardData() {
   const weekNumber =
     Math.max(1, Math.floor((today.getTime() - startOfDay(programStart).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1);
 
-  const [review, records, weightTrend, workoutCompliance, habitCompliance] = await Promise.all([
+  const [review, records, weightTrend, workoutCompliance, habitCompliance, volumeTrend, correlations] = await Promise.all([
     getWeeklyReview(weekNumber),
     getPersonalRecords(),
     prisma.dailyCheckIn.findMany({
@@ -62,6 +62,58 @@ export async function getDashboardData() {
         totalDays: h.logs.length,
       }));
     })(),
+    (async () => {
+      const start = startOfDay(subWeeks(today, 11));
+      const logs = await prisma.exerciseLog.findMany({
+        where: {
+          weight: { not: null },
+          reps: { not: null },
+          session: { date: { gte: start, lte: today } },
+        },
+        include: { session: { select: { date: true } } },
+        orderBy: { session: { date: "asc" } },
+      });
+      const weeks: { label: string; tonnage: number; totalReps: number; avgIntensity: number }[] = [];
+      for (let i = 11; i >= 0; i--) {
+        const weekStart = startOfWeek(subWeeks(today, i), { weekStartsOn: WEEK_STARTS_ON });
+        const weekEnd = addDaysTo(weekStart, 6);
+        const inWeek = logs.filter((l) => l.session.date >= weekStart && l.session.date <= weekEnd);
+        const tonnage = inWeek.reduce((s, l) => s + (l.weight ?? 0) * (l.reps ?? 0), 0);
+        const totalReps = inWeek.reduce((s, l) => s + (l.reps ?? 0), 0);
+        // Average intensity as % of estimated 1RM (Epley) per logged set.
+        let avgIntensity = 0;
+        if (inWeek.length > 0) {
+          const intensities = inWeek
+            .map((l) => {
+              const rm = l.weight! * (1 + l.reps! / 30);
+              return rm > 0 ? (l.weight! / rm) * 100 : null;
+            })
+            .filter((x): x is number => x != null);
+          avgIntensity = intensities.length > 0 ? Math.round(intensities.reduce((s, x) => s + x, 0) / intensities.length) : 0;
+        }
+        weeks.push({
+          label: weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          tonnage: Math.round(tonnage),
+          totalReps,
+          avgIntensity,
+        });
+      }
+      return weeks;
+    })(),
+    (async () => {
+      const checkIns = await prisma.dailyCheckIn.findMany({
+        where: { date: { lte: today } },
+        orderBy: { date: "asc" },
+        select: { date: true, sleepHours: true, calories: true, energy: true },
+        take: 90,
+      });
+      return checkIns.map((c) => ({
+        date: c.date,
+        sleepHours: c.sleepHours,
+        calories: c.calories,
+        energy: c.energy,
+      }));
+    })(),
   ]);
 
   const avgCaloriesTarget = profile?.dailyCaloriesTarget ?? null;
@@ -76,6 +128,8 @@ export async function getDashboardData() {
       .map((w) => ({ date: w.date, value: w.morningWeight })),
     workoutCompliance,
     habitCompliance,
+    volumeTrend,
+    correlations,
     targets: {
       calories: avgCaloriesTarget,
       protein: avgProteinTarget,

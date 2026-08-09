@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowClockwise, ForkKnife, Plus, Trash } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
@@ -137,12 +137,15 @@ export function FoodLogSection({
     setLoaded(true);
   }
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
   useEffect(() => {
-    void load();
+    void loadRef.current();
   }, [date]);
 
   useEffect(() => {
-    const handler = () => void load();
+    const handler = () => void loadRef.current();
     window.addEventListener("somatix:food-log-updated", handler);
     return () => window.removeEventListener("somatix:food-log-updated", handler);
   }, [date]);

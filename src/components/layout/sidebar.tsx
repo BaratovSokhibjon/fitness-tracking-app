@@ -16,6 +16,7 @@ import {
   TrendUp,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navSections = [
   {
@@ -105,6 +106,7 @@ export function Sidebar() {
           item={{ href: "/profile", label: "Profile", icon: GearSix }}
           pathname={pathname}
         />
+        <ThemeToggle />
       </div>
     </aside>
   );
