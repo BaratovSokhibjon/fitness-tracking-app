@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { measurementSchema, type MeasurementInput } from "@/schemas/measurement";
 import { startOfDay } from "date-fns";
 
@@ -12,9 +13,9 @@ export async function saveMeasurement(input: MeasurementInput) {
   const day = startOfDay(new Date(date));
 
   const measurement = await prisma.bodyMeasurement.upsert({
-    where: { date: day },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date: day } },
     update: rest,
-    create: { date: day, ...rest },
+    create: { date: day, userId: DEFAULT_USER_ID, ...rest },
   });
 
   revalidatePath("/progress");
@@ -23,6 +24,7 @@ export async function saveMeasurement(input: MeasurementInput) {
 
 export async function getMeasurements() {
   return prisma.bodyMeasurement.findMany({
+    where: { userId: DEFAULT_USER_ID },
     orderBy: { date: "asc" },
   });
 }

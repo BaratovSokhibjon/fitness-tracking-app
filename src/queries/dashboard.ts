@@ -2,6 +2,7 @@ import "server-only";
 
 import { startOfDay, startOfWeek, subWeeks } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { getPersonalRecords } from "@/queries/records";
 import { getWeeklyReview } from "@/actions/review";
 
@@ -15,7 +16,7 @@ function addDaysTo(date: Date, days: number) {
 
 export async function getDashboardData() {
   const today = startOfDay(new Date());
-  const profile = await prisma.profile.findFirst();
+  const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   const programStart = profile?.programStartDate ?? new Date();
   const weekNumber =
     Math.max(1, Math.floor((today.getTime() - startOfDay(programStart).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1);
@@ -24,7 +25,7 @@ export async function getDashboardData() {
     getWeeklyReview(weekNumber),
     getPersonalRecords(),
     prisma.dailyCheckIn.findMany({
-      where: { morningWeight: { not: null }, date: { lte: today } },
+      where: { userId: DEFAULT_USER_ID, morningWeight: { not: null }, date: { lte: today } },
       orderBy: { date: "desc" },
       select: { date: true, morningWeight: true },
       take: 90,
@@ -32,7 +33,7 @@ export async function getDashboardData() {
     (async () => {
       const start = startOfDay(subWeeks(today, 11));
       const schedules = await prisma.workoutSchedule.findMany({
-        where: { date: { gte: start, lte: today } },
+        where: { userId: DEFAULT_USER_ID, date: { gte: start, lte: today } },
       });
       const weeks: { label: string; planned: number; completed: number }[] = [];
       for (let i = 11; i >= 0; i--) {
@@ -52,7 +53,7 @@ export async function getDashboardData() {
       const habits = await prisma.habit.findMany({
         where: { isActive: true },
         include: {
-          logs: { where: { date: { gte: start, lte: today } } },
+          logs: { where: { userId: DEFAULT_USER_ID, date: { gte: start, lte: today } } },
         },
         orderBy: { sortOrder: "asc" },
       });
@@ -66,6 +67,7 @@ export async function getDashboardData() {
       const start = startOfDay(subWeeks(today, 11));
       const logs = await prisma.exerciseLog.findMany({
         where: {
+          userId: DEFAULT_USER_ID,
           weight: { not: null },
           reps: { not: null },
           session: { date: { gte: start, lte: today } },
@@ -102,7 +104,7 @@ export async function getDashboardData() {
     })(),
     (async () => {
       const checkIns = await prisma.dailyCheckIn.findMany({
-        where: { date: { lte: today } },
+        where: { userId: DEFAULT_USER_ID, date: { lte: today } },
         orderBy: { date: "asc" },
         select: { date: true, sleepHours: true, calories: true, energy: true },
         take: 90,

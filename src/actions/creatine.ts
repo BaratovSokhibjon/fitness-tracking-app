@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { getCreatinePhase } from "@/lib/creatine";
 import {
   toggleCreatineSchema,
@@ -14,7 +15,7 @@ import {
 const DEFAULT_PROFILE_ID = "default-profile";
 
 export async function getCreatineConfig() {
-  const profile = await prisma.profile.findUnique({ where: { id: DEFAULT_PROFILE_ID } });
+  const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   if (!profile) return null;
   return {
     enabled: profile.creatineEnabled,
@@ -29,7 +30,7 @@ export async function getCreatineConfig() {
 export async function updateCreatineConfig(input: UpdateCreatineConfigInput) {
   const data = updateCreatineConfigSchema.parse(input);
   await prisma.profile.upsert({
-    where: { id: DEFAULT_PROFILE_ID },
+    where: { userId: DEFAULT_USER_ID },
     update: {
       creatineEnabled: data.enabled,
       creatineProtocol: data.protocol,
@@ -40,6 +41,7 @@ export async function updateCreatineConfig(input: UpdateCreatineConfigInput) {
     },
     create: {
       id: DEFAULT_PROFILE_ID,
+      userId: DEFAULT_USER_ID,
       creatineEnabled: data.enabled,
       creatineProtocol: data.protocol,
       creatineStartDate: data.startDate ? new Date(data.startDate) : null,
@@ -58,7 +60,9 @@ export async function toggleCreatine(input: ToggleCreatineInput) {
   const { date: dateStr } = toggleCreatineSchema.parse(input);
   const date = startOfDay(new Date(dateStr));
 
-  const existing = await prisma.creatineLog.findUnique({ where: { date } });
+  const existing = await prisma.creatineLog.findUnique({
+    where: { userId_date: { userId: DEFAULT_USER_ID, date } },
+  });
   if (existing) {
     await prisma.creatineLog.delete({ where: { id: existing.id } });
   } else {
@@ -66,7 +70,7 @@ export async function toggleCreatine(input: ToggleCreatineInput) {
     if (!config?.enabled) return { ok: false, logged: false };
     const phase = getCreatinePhase(config, date);
     await prisma.creatineLog.create({
-      data: { date, doseGrams: phase.recommendedDose },
+      data: { userId: DEFAULT_USER_ID, date, doseGrams: phase.recommendedDose },
     });
   }
 

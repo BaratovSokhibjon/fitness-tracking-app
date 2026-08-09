@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay, endOfWeek, startOfWeek } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { average, round1 } from "@/lib/utils";
 
 const WEEK_STARTS_ON = 1 as const;
 
 export async function getWeeklyReview(weekNumber: number) {
-  const profile = await prisma.profile.findFirst();
+  const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   const programStart = profile?.programStartDate ?? new Date();
 
   const weekStart = startOfWeek(addDaysTo(programStart, (weekNumber - 1) * 7), { weekStartsOn: WEEK_STARTS_ON });
@@ -16,11 +17,11 @@ export async function getWeeklyReview(weekNumber: number) {
 
   const [checkIns, sessions, habits, schedules] = await Promise.all([
     prisma.dailyCheckIn.findMany({
-      where: { date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
+      where: { userId: DEFAULT_USER_ID, date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
       orderBy: { date: "asc" },
     }),
     prisma.workoutSession.findMany({
-      where: { date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
+      where: { userId: DEFAULT_USER_ID, date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
       include: {
         workout: true,
         exerciseLogs: true,
@@ -29,12 +30,12 @@ export async function getWeeklyReview(weekNumber: number) {
     prisma.habit.findMany({
       include: {
         logs: {
-          where: { date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
+          where: { userId: DEFAULT_USER_ID, date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
         },
       },
     }),
     prisma.workoutSchedule.findMany({
-      where: { date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
+      where: { userId: DEFAULT_USER_ID, date: { gte: startOfDay(weekStart), lte: startOfDay(weekEnd) } },
     }),
   ]);
 
@@ -73,15 +74,16 @@ function addDaysTo(date: Date, days: number) {
 }
 
 export async function saveReviewNotes(weekNumber: number, notes: string) {
-  const profile = await prisma.profile.findFirst();
+  const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   const programStart = profile?.programStartDate ?? new Date();
   const weekStart = startOfWeek(addDaysTo(programStart, (weekNumber - 1) * 7), { weekStartsOn: WEEK_STARTS_ON });
+  const weekStartDay = startOfDay(weekStart);
 
   // Notes are stored on the first check-in of the week.
   await prisma.dailyCheckIn.upsert({
-    where: { date: startOfDay(weekStart) },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date: weekStartDay } },
     update: { notes },
-    create: { date: startOfDay(weekStart), notes },
+    create: { userId: DEFAULT_USER_ID, date: weekStartDay, notes },
   });
 
   revalidatePath(`/review`);

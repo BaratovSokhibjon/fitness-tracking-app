@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { epley1RM } from "@/lib/utils";
 
 export type ExerciseHistoryRow = {
@@ -16,7 +17,7 @@ export type ExerciseHistoryRow = {
 
 export async function getExerciseHistory(exerciseId: string, limit = 5) {
   const logs = await prisma.exerciseLog.findMany({
-    where: { exerciseId },
+    where: { userId: DEFAULT_USER_ID, exerciseId },
     include: { session: { select: { date: true, id: true } } },
     orderBy: [{ session: { date: "desc" } }, { setNumber: "asc" }],
     take: limit * 20,
@@ -147,7 +148,7 @@ export type ExerciseTrend = {
 
 export async function getExercise1RMTrends(limit = 20) {
   const activeProgram = await prisma.program.findFirst({
-    where: { isActive: true },
+    where: { isActive: true, userId: DEFAULT_USER_ID },
     include: {
       workouts: {
         include: {
@@ -164,7 +165,7 @@ export async function getExercise1RMTrends(limit = 20) {
     : [];
 
   const logs = await prisma.exerciseLog.findMany({
-    where: exerciseIds.length > 0 ? { exerciseId: { in: exerciseIds } } : {},
+    where: exerciseIds.length > 0 ? { userId: DEFAULT_USER_ID, exerciseId: { in: exerciseIds } } : { userId: DEFAULT_USER_ID },
     include: {
       exercise: { include: { exercise: { select: { name: true, type: true } } } },
       session: { select: { date: true, id: true } },
@@ -227,7 +228,7 @@ export type ExercisePR = {
 export async function getExercisePRs(exerciseIds: string[]): Promise<ExercisePR[]> {
   if (exerciseIds.length === 0) return [];
   const logs = await prisma.exerciseLog.findMany({
-    where: { exerciseId: { in: exerciseIds } },
+    where: { userId: DEFAULT_USER_ID, exerciseId: { in: exerciseIds } },
     select: { exerciseId: true, weight: true, reps: true, durationSec: true },
   });
 

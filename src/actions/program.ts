@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { programSchema, type ProgramInput } from "@/schemas/program";
 import { generateSchedule } from "@/actions/schedule";
 
 export async function createProgram(input: ProgramInput) {
   const data = programSchema.parse(input);
-  const program = await prisma.program.create({ data });
+  const program = await prisma.program.create({ data: { ...data, userId: DEFAULT_USER_ID } });
   revalidatePath("/program");
   return program;
 }
@@ -23,11 +24,11 @@ export async function updateProgram(id: string, input: ProgramInput) {
 
 export async function activateProgram(id: string) {
   await prisma.$transaction([
-    prisma.program.updateMany({ where: { isActive: true }, data: { isActive: false } }),
+    prisma.program.updateMany({ where: { isActive: true, userId: DEFAULT_USER_ID }, data: { isActive: false } }),
     prisma.program.update({ where: { id }, data: { isActive: true } }),
   ]);
 
-  const profile = await prisma.profile.findFirst();
+  const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   if (profile && !profile.programStartDate) {
     await prisma.profile.update({
       where: { id: profile.id },
@@ -58,6 +59,7 @@ export async function duplicateProgram(id: string) {
 
   const program = await prisma.program.create({
     data: {
+      userId: DEFAULT_USER_ID,
       name: `${source.name} (copy)`,
       description: source.description,
       durationWeeks: source.durationWeeks,

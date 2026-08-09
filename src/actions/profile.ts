@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { profileSchema, type ProfileInput } from "@/schemas/profile";
 
 const DEFAULT_PROFILE_ID = "default-profile";
@@ -10,13 +11,14 @@ export async function updateProfile(input: ProfileInput) {
   const data = profileSchema.parse(input);
 
   const profile = await prisma.profile.upsert({
-    where: { id: DEFAULT_PROFILE_ID },
+    where: { userId: DEFAULT_USER_ID },
     update: {
       ...data,
       programStartDate: data.programStartDate ? new Date(data.programStartDate) : undefined,
     },
     create: {
       id: DEFAULT_PROFILE_ID,
+      userId: DEFAULT_USER_ID,
       ...data,
       programStartDate: data.programStartDate ? new Date(data.programStartDate) : undefined,
     },
@@ -29,6 +31,6 @@ export async function updateProfile(input: ProfileInput) {
 }
 
 export async function getProfile() {
-  const profile = await prisma.profile.findUnique({ where: { id: DEFAULT_PROFILE_ID } });
+  const profile = await prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } });
   return profile;
 }

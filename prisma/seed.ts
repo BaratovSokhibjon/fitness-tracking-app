@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+export const DEFAULT_USER_ID = "default-user";
 
 const defaultHabits = [
   { name: "Creatine", sortOrder: 0 },
@@ -81,11 +84,22 @@ const programWorkouts = [
 async function main() {
   console.log("Seeding...");
 
+  // Create the default user from env (fixed id matches the migration backfill).
+  const email = process.env.SEED_EMAIL ?? "admin@somatix.local";
+  const password = process.env.SEED_PASSWORD ?? "somatix-dev-password";
+  const user = await prisma.user.upsert({
+    where: { id: DEFAULT_USER_ID },
+    update: { email, passwordHash: await bcrypt.hash(password, 10) },
+    create: { id: DEFAULT_USER_ID, email, passwordHash: await bcrypt.hash(password, 10) },
+  });
+  console.log(`  user: ${user.email}`);
+
   const profile = await prisma.profile.upsert({
     where: { id: "default-profile" },
-    update: {},
+    update: { userId: DEFAULT_USER_ID },
     create: {
       id: "default-profile",
+      userId: DEFAULT_USER_ID,
       age: 30,
       height: 178,
       programStartDate: new Date(),
@@ -122,14 +136,16 @@ async function main() {
   const goalCount = await prisma.goal.count();
   if (goalCount === 0) {
     for (const g of defaultGoals) {
-      await prisma.goal.create({ data: g });
+      await prisma.goal.create({ data: { ...g, userId: DEFAULT_USER_ID } });
     }
     console.log("  goals:", defaultGoals.length);
   } else {
     console.log("  goals: skipped (already present)");
   }
 
-  const existingProgram = await prisma.program.findFirst({ where: { name: "8-Week Transformation" } });
+  const existingProgram = await prisma.program.findFirst({
+    where: { name: "8-Week Transformation", userId: DEFAULT_USER_ID },
+  });
 
   // Ensure every exercise from the program exists in the library.
   const libraryByLowerName = new Map<string, { id: string }>();
@@ -160,6 +176,7 @@ async function main() {
   } else {
     program = await prisma.program.create({
       data: {
+        userId: DEFAULT_USER_ID,
         name: "8-Week Transformation",
         description: "Full body transformation program — 4 workouts per week.",
         durationWeeks: 8,

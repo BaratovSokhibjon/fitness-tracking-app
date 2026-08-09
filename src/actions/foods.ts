@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { foodItemSchema, foodLogEntrySchema, type FoodItemInput, type FoodLogEntryInput } from "@/schemas/food";
 
 async function recomputeCheckInTotals(checkInId: string) {
@@ -122,9 +123,9 @@ export async function addFoodToLog(input: FoodLogEntryInput) {
   if (!food) throw new Error("Food not found");
 
   const checkIn = await prisma.dailyCheckIn.upsert({
-    where: { date },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date } },
     update: {},
-    create: { date },
+    create: { date, userId: DEFAULT_USER_ID },
   });
 
   const entry = await prisma.foodLogEntry.create({
@@ -164,7 +165,7 @@ export async function removeFoodFromLog(entryId: string) {
 export async function getFoodLogForDate(date: string) {
   const day = startOfDay(new Date(date));
   const checkIn = await prisma.dailyCheckIn.findUnique({
-    where: { date: day },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date: day } },
     include: {
       foodLog: {
         include: { foodItem: true },
@@ -183,6 +184,7 @@ export async function getFoodLogForDate(date: string) {
 
 export async function getMealTemplates() {
   return prisma.mealTemplate.findMany({
+    where: { userId: DEFAULT_USER_ID },
     include: {
       items: {
         include: { foodItem: true },
@@ -199,6 +201,7 @@ export async function createMealTemplate(name: string, items: { foodItemId: stri
 
   const template = await prisma.mealTemplate.create({
     data: {
+      userId: DEFAULT_USER_ID,
       name: name.trim(),
       items: {
         create: items.map((i) => ({ foodItemId: i.foodItemId, quantity: i.quantity })),
@@ -223,9 +226,9 @@ export async function logMealTemplate(date: string, templateId: string) {
   if (!template) throw new Error("Meal template not found");
 
   const checkIn = await prisma.dailyCheckIn.upsert({
-    where: { date: day },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date: day } },
     update: {},
-    create: { date: day },
+    create: { date: day, userId: DEFAULT_USER_ID },
   });
 
   await prisma.$transaction(
@@ -257,7 +260,7 @@ export async function copyYesterdaysMeals(date: string) {
   yesterday.setDate(yesterday.getDate() - 1);
 
   const yesterdayCheckIn = await prisma.dailyCheckIn.findUnique({
-    where: { date: startOfDay(yesterday) },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date: startOfDay(yesterday) } },
     include: { foodLog: true },
   });
   if (!yesterdayCheckIn || yesterdayCheckIn.foodLog.length === 0) {
@@ -265,9 +268,9 @@ export async function copyYesterdaysMeals(date: string) {
   }
 
   const checkIn = await prisma.dailyCheckIn.upsert({
-    where: { date: day },
+    where: { userId_date: { userId: DEFAULT_USER_ID, date: day } },
     update: {},
-    create: { date: day },
+    create: { date: day, userId: DEFAULT_USER_ID },
   });
 
   await prisma.$transaction(

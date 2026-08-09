@@ -2,6 +2,7 @@ import "server-only";
 
 import { startOfDay, startOfWeek, endOfWeek, subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { getCreatinePhase } from "@/lib/creatine";
 
 const WEEK_STARTS_ON = 1 as const;
@@ -13,10 +14,10 @@ export async function getTodayData() {
 
   const [profile, todayCheckIn, todaySchedule, yesterdayCheckIn, todayHabits, weekSchedules, activeProgram] =
     await Promise.all([
-      prisma.profile.findFirst(),
-      prisma.dailyCheckIn.findUnique({ where: { date: today } }),
+      prisma.profile.findUnique({ where: { userId: DEFAULT_USER_ID } }),
+      prisma.dailyCheckIn.findUnique({ where: { userId_date: { userId: DEFAULT_USER_ID, date: today } } }),
       prisma.workoutSchedule.findUnique({
-        where: { date: today },
+        where: { userId_date: { userId: DEFAULT_USER_ID, date: today } },
         include: {
           workout: {
             include: { exercises: { include: { exercise: true }, orderBy: { sortOrder: "asc" } } },
@@ -25,7 +26,7 @@ export async function getTodayData() {
         },
       }),
       prisma.dailyCheckIn.findFirst({
-        where: { date: { lt: today } },
+        where: { userId: DEFAULT_USER_ID, date: { lt: today } },
         orderBy: { date: "desc" },
         select: {
           morningWeight: true,
@@ -42,18 +43,19 @@ export async function getTodayData() {
         where: { isActive: true },
         include: {
           logs: {
-            where: { date: today },
+            where: { userId: DEFAULT_USER_ID, date: today },
           },
         },
         orderBy: { sortOrder: "asc" },
       }),
       prisma.workoutSchedule.findMany({
         where: {
+          userId: DEFAULT_USER_ID,
           date: { gte: weekStart, lte: weekEnd },
         },
       }),
       prisma.program.findFirst({
-        where: { isActive: true },
+        where: { isActive: true, userId: DEFAULT_USER_ID },
         select: {
           workouts: {
             select: {
@@ -86,9 +88,9 @@ export async function getTodayData() {
   let creatine = null;
   if (creatineEnabled) {
     const [todayLog, last30Days] = await Promise.all([
-      prisma.creatineLog.findUnique({ where: { date: today } }),
+      prisma.creatineLog.findUnique({ where: { userId_date: { userId: DEFAULT_USER_ID, date: today } } }),
       prisma.creatineLog.findMany({
-        where: { date: { gte: subDays(today, 30), lte: today } },
+        where: { userId: DEFAULT_USER_ID, date: { gte: subDays(today, 30), lte: today } },
         select: { date: true },
       }),
     ]);

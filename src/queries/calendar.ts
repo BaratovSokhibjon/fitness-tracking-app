@@ -2,13 +2,14 @@ import "server-only";
 
 import { startOfMonth, endOfMonth, startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 
 export async function getCalendarData(date: Date) {
   const start = startOfDay(startOfMonth(date));
   const end = startOfDay(endOfMonth(date));
 
   const schedules = await prisma.workoutSchedule.findMany({
-    where: { date: { gte: start, lte: end } },
+    where: { userId: DEFAULT_USER_ID, date: { gte: start, lte: end } },
     include: {
       workout: { include: { exercises: { include: { exercise: true } } } },
       session: true,
@@ -21,6 +22,7 @@ export async function getCalendarData(date: Date) {
 
 export async function getProgramList() {
   return prisma.program.findMany({
+    where: { userId: DEFAULT_USER_ID },
     include: { _count: { select: { workouts: true } } },
     orderBy: { updatedAt: "desc" },
   });
@@ -28,7 +30,7 @@ export async function getProgramList() {
 
 export async function getProgram(programId: string) {
   return prisma.program.findUnique({
-    where: { id: programId },
+    where: { id: programId, userId: DEFAULT_USER_ID },
     include: {
       workouts: {
         include: { exercises: { include: { exercise: true }, orderBy: { sortOrder: "asc" } } },

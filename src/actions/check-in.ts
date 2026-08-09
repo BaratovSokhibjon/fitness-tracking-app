@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import {
   checkInSchema,
   postWorkoutSchema,
@@ -12,11 +13,13 @@ import {
   type QuickCheckInInput,
 } from "@/schemas/check-in";
 
-async function upsertCheckIn(where: { date: Date }, data: object) {
+async function upsertCheckIn(whereDate: Date, data: object) {
+  const date = startOfDay(whereDate);
+  const userId = DEFAULT_USER_ID;
   return prisma.dailyCheckIn.upsert({
-    where,
+    where: { userId_date: { userId, date } },
     update: data,
-    create: { date: where.date, ...data },
+    create: { date, userId, ...data },
   });
 }
 
@@ -25,7 +28,7 @@ export async function saveQuickCheckIn(input: QuickCheckInInput) {
   const date = startOfDay(new Date(data.date));
 
   await upsertCheckIn(
-    { date },
+    date,
     {
       morningWeight: data.morningWeight,
       sleepHours: data.sleepHours,
@@ -44,7 +47,7 @@ export async function saveNutrition(input: CheckInInput) {
   const date = startOfDay(new Date(data.date));
 
   await upsertCheckIn(
-    { date },
+    date,
     {
       calories: data.calories,
       protein: data.protein,
@@ -66,7 +69,7 @@ export async function savePostWorkout(input: PostWorkoutInput) {
   const date = startOfDay(new Date(data.date));
 
   await upsertCheckIn(
-    { date },
+    date,
     {
       energy: data.energy,
       soreness: data.soreness,
@@ -83,7 +86,7 @@ export async function saveFullCheckIn(input: CheckInInput) {
   const data = checkInSchema.parse(input);
   const date = startOfDay(new Date(data.date));
 
-  await upsertCheckIn({ date }, data);
+  await upsertCheckIn(date, data);
 
   revalidatePath("/");
   revalidatePath("/history");
@@ -91,7 +94,7 @@ export async function saveFullCheckIn(input: CheckInInput) {
 }
 
 export async function getCheckIn(date: Date) {
-  return prisma.dailyCheckIn.findUnique({ where: { date: startOfDay(date) } });
+  return prisma.dailyCheckIn.findUnique({ where: { userId_date: { userId: DEFAULT_USER_ID, date: startOfDay(date) } } });
 }
 
 export async function getCheckInsByDateRange(start: Date, end: Date) {

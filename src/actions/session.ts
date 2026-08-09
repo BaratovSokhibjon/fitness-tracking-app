@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { logSetSchema, sessionSchema, type LogSetInput, type SessionInput } from "@/schemas/session";
 import { compute1RM } from "@/lib/progression";
 
@@ -26,6 +27,7 @@ export async function startSession(scheduleId: string) {
   try {
     const session = await prisma.workoutSession.create({
       data: {
+        userId: DEFAULT_USER_ID,
         scheduleId,
         workoutId: schedule.workout.id,
         date: startOfDay(schedule.date),
@@ -69,6 +71,7 @@ export async function logSet(input: LogSetInput) {
       notes: data.notes,
     },
     create: {
+      userId: DEFAULT_USER_ID,
       sessionId: schedule.session.id,
       exerciseId: data.exerciseId,
       setNumber: data.setNumber,
@@ -120,6 +123,7 @@ export async function completeSession(input: SessionInput) {
     if (!session) {
       session = await tx.workoutSession.create({
         data: {
+          userId: DEFAULT_USER_ID,
           scheduleId,
           workoutId: data.workoutId,
           date: startOfDay(new Date(data.date)),
@@ -153,6 +157,7 @@ export async function completeSession(input: SessionInput) {
           notes: log.notes,
         },
         create: {
+          userId: DEFAULT_USER_ID,
           sessionId: session.id,
           exerciseId: log.exerciseId,
           setNumber: log.setNumber,
@@ -211,6 +216,7 @@ export async function completeSession(input: SessionInput) {
 
 export async function getSessionHistory() {
   return prisma.workoutSession.findMany({
+    where: { userId: DEFAULT_USER_ID },
     include: {
       workout: true,
       schedule: true,

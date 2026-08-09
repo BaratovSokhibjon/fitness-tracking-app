@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_USER_ID } from "@/lib/user";
 import { habitSchema, habitToggleSchema, type HabitInput, type HabitToggleInput } from "@/schemas/habit";
 
 export async function createHabit(input: HabitInput) {
@@ -18,11 +19,12 @@ export async function createHabit(input: HabitInput) {
 export async function toggleHabit(input: HabitToggleInput) {
   const { habitId, date: dateStr, completed } = habitToggleSchema.parse(input);
   const date = startOfDay(new Date(dateStr));
+  const userId = DEFAULT_USER_ID;
 
   await prisma.habitLog.upsert({
-    where: { habitId_date: { habitId, date } },
+    where: { userId_habitId_date: { userId, habitId, date } },
     update: { completed },
-    create: { habitId, date, completed },
+    create: { userId, habitId, date, completed },
   });
 
   revalidatePath("/");
