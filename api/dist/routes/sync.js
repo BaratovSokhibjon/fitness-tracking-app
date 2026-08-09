@@ -78,6 +78,8 @@ app.post("/", async (c) => {
     if (!body)
         return (0, validate_1.badRequest)(c, "Invalid payload");
     const applied = [];
+    const failedOpIds = [];
+    const duplicateOpIds = [];
     for (const op of body.ops) {
         // If the op carries a client opId, dedup: an already-seen opId is skipped.
         const opId = op.opId;
@@ -89,6 +91,7 @@ app.post("/", async (c) => {
             }
             catch {
                 applied.push(`${op.type}:duplicate`);
+                duplicateOpIds.push(opId);
                 continue; // already applied on a prior retry — skip.
             }
         }
@@ -108,25 +111,33 @@ app.post("/", async (c) => {
                 case "food_add": {
                     const date = toDate(op.date);
                     const food = await prisma_1.prisma.foodItem.findUnique({ where: { id: op.foodItemId } });
-                    if (food) {
-                        const checkIn = await prisma_1.prisma.dailyCheckIn.upsert({
-                            where: { userId_date: { userId: prisma_1.DEFAULT_USER_ID, date } },
-                            update: {},
-                            create: { userId: prisma_1.DEFAULT_USER_ID, date },
-                        });
-                        await prisma_1.prisma.foodLogEntry.create({
-                            data: {
-                                checkInId: checkIn.id,
-                                foodItemId: op.foodItemId,
-                                quantity: op.quantity,
-                                calories: Math.round(food.caloriesPerServing * op.quantity),
-                                protein: food.proteinPerServing * op.quantity,
-                                carbs: food.carbsPerServing * op.quantity,
-                                fat: food.fatPerServing * op.quantity,
-                            },
-                        });
-                        await recomputeCheckInTotals(checkIn.id);
+                    if (!food) {
+                        // Food no longer exists — treat as error so the client can drop it.
+                        applied.push("food_add:error");
+                        if (opId)
+                            failedOpIds.push(opId);
+                        // Release the idempotency key so a retry isn't misread as a duplicate.
+                        if (opId)
+                            await prisma_1.prisma.idempotencyKey.deleteMany({ where: { userId: prisma_1.DEFAULT_USER_ID, key: opId } });
+                        break;
                     }
+                    const checkIn = await prisma_1.prisma.dailyCheckIn.upsert({
+                        where: { userId_date: { userId: prisma_1.DEFAULT_USER_ID, date } },
+                        update: {},
+                        create: { userId: prisma_1.DEFAULT_USER_ID, date },
+                    });
+                    await prisma_1.prisma.foodLogEntry.create({
+                        data: {
+                            checkInId: checkIn.id,
+                            foodItemId: op.foodItemId,
+                            quantity: op.quantity,
+                            calories: Math.round(food.caloriesPerServing * op.quantity),
+                            protein: food.proteinPerServing * op.quantity,
+                            carbs: food.carbsPerServing * op.quantity,
+                            fat: food.fatPerServing * op.quantity,
+                        },
+                    });
+                    await recomputeCheckInTotals(checkIn.id);
                     applied.push("food_add");
                     break;
                 }
@@ -176,8 +187,13 @@ app.post("/", async (c) => {
             }
         }
         catch (e) {
-            // Skip a failing op but continue the batch; report it.
+            // Skip a failing op but continue the batch; report it. Release the
+            // idempotency key so a retry can re-attempt (not misread as duplicate).
             applied.push(`${op.type}:error`);
+            if (opId) {
+                failedOpIds.push(opId);
+                await prisma_1.prisma.idempotencyKey.deleteMany({ where: { userId: prisma_1.DEFAULT_USER_ID, key: opId } });
+            }
         }
     }
     // ─── Pull: rows changed since `since` ──────────────────
@@ -202,8 +218,10 @@ app.post("/", async (c) => {
             where: { userId: prisma_1.DEFAULT_USER_ID },
             orderBy: { date: "asc" },
         }),
+        // Schedules: pull unconditionally (recent window) since workout/exercise
+        // edits don't bump the schedule row's updatedAt. Small data — safe to send all.
         prisma_1.prisma.workoutSchedule.findMany({
-            where: { userId: prisma_1.DEFAULT_USER_ID, updatedAt: { gte: since } },
+            where: { userId: prisma_1.DEFAULT_USER_ID },
             include: { workout: { include: { exercises: { include: { exercise: true } } } }, session: true },
             orderBy: { date: "asc" },
         }),
@@ -212,10 +230,14 @@ app.post("/", async (c) => {
         applied: applied.filter((a) => !a.endsWith(":error") && !a.endsWith(":duplicate")).length,
         errors: applied.filter((a) => a.endsWith(":error")).length,
         duplicates: applied.filter((a) => a.endsWith(":duplicate")).length,
+        failedOpIds,
+        duplicateOpIds,
         serverTime: new Date().toISOString(),
         data: {
             checkIns: checkIns.map((ci) => ({
-                date: ci.date.toISOString(),
+                // Dates are calendar days (server-local midnight), serialized as yyyy-MM-dd
+                // so the client's calendar day is stable regardless of UTC serialization.
+                date: (0, date_fns_1.format)(ci.date, "yyyy-MM-dd"),
                 morningWeight: ci.morningWeight,
                 sleepHours: ci.sleepHours,
                 energy: ci.energy,
@@ -234,7 +256,7 @@ app.post("/", async (c) => {
             })),
             foodLog: foodLog.map((f) => ({
                 id: f.id,
-                date: f.checkIn.date.toISOString(),
+                date: (0, date_fns_1.format)(f.checkIn.date, "yyyy-MM-dd"),
                 foodItemId: f.foodItemId,
                 quantity: f.quantity,
                 calories: f.calories,
@@ -248,12 +270,12 @@ app.post("/", async (c) => {
                 id: h.id,
                 name: h.name,
                 completed: h.logs.filter((l) => l.completed).length > 0,
-                logDates: h.logs.map((l) => ({ date: l.date.toISOString(), completed: l.completed })),
+                logDates: h.logs.map((l) => ({ date: (0, date_fns_1.format)(l.date, "yyyy-MM-dd"), completed: l.completed })),
             })),
-            creatine: creatine.map((cl) => ({ date: cl.date.toISOString(), doseGrams: cl.doseGrams })),
+            creatine: creatine.map((cl) => ({ date: (0, date_fns_1.format)(cl.date, "yyyy-MM-dd"), doseGrams: cl.doseGrams })),
             schedule: schedule.map((s) => ({
                 id: s.id,
-                date: s.date.toISOString(),
+                date: (0, date_fns_1.format)(s.date, "yyyy-MM-dd"),
                 status: s.status,
                 workout: s.workout,
                 session: s.session,
