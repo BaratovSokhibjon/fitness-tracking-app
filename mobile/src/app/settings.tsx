@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -30,6 +29,10 @@ export default function SettingsScreen() {
         setTimeout(() => setMsg(null), 3000);
         return;
       }
+      // Lazy-import: expo-notifications was removed from Expo Go on Android in
+      // SDK 53, so a static import would crash the whole app in Expo Go. In a
+      // development build the module resolves normally.
+      const Notifications = await import("expo-notifications");
       const { status: existing } = await Notifications.getPermissionsAsync();
       let finalStatus = existing;
       if (existing !== "granted") {
@@ -46,8 +49,8 @@ export default function SettingsScreen() {
       setMsg("Push notifications enabled.");
       setTimeout(() => setMsg(null), 3000);
     } catch (e) {
-      setMsg("Could not register for push.");
-      setTimeout(() => setMsg(null), 3000);
+      setMsg("Could not register for push. Notifications require a development build.");
+      setTimeout(() => setMsg(null), 4000);
     }
   };
 

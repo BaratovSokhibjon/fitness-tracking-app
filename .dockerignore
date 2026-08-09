@@ -1,0 +1,11 @@
+node_modules
+.next
+api/dist
+mobile
+dist
+.expo
+.git
+*.log
+.env
+.env.*
+!.env.example

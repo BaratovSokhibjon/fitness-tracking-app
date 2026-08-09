@@ -23,12 +23,14 @@ function RootNavigator() {
           headerTitleStyle: { fontWeight: "500" },
         }}
       >
-        <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="index" options={{ title: "Today" }} />
-          <Stack.Screen name="profile" options={{ title: "Profile" }} />
-          <Stack.Screen name="reminders" options={{ title: "Reminders" }} />
-          <Stack.Screen name="settings" options={{ title: "Settings" }} />
-        </Stack.Protected>
+        {signedIn && (
+          <>
+            <Stack.Screen name="index" options={{ title: "Today" }} />
+            <Stack.Screen name="profile" options={{ title: "Profile" }} />
+            <Stack.Screen name="reminders" options={{ title: "Reminders" }} />
+            <Stack.Screen name="settings" options={{ title: "Settings" }} />
+          </>
+        )}
         <Stack.Screen name="auth/login" options={{ title: "Sign in", headerShown: false }} />
       </Stack>
     </>
