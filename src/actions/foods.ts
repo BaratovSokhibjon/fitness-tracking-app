@@ -178,3 +178,117 @@ export async function getFoodLogForDate(date: string) {
     entries: checkIn?.foodLog ?? [],
   };
 }
+
+// ─── Meal Templates ──────────────────────────────────────
+
+export async function getMealTemplates() {
+  return prisma.mealTemplate.findMany({
+    include: {
+      items: {
+        include: { foodItem: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function createMealTemplate(name: string, items: { foodItemId: string; quantity: number }[]) {
+  if (!name.trim()) throw new Error("Meal name is required");
+  if (items.length === 0) throw new Error("Add at least one food to the meal");
+
+  const template = await prisma.mealTemplate.create({
+    data: {
+      name: name.trim(),
+      items: {
+        create: items.map((i) => ({ foodItemId: i.foodItemId, quantity: i.quantity })),
+      },
+    },
+    include: { items: { include: { foodItem: true } } },
+  });
+  return template;
+}
+
+export async function deleteMealTemplate(id: string) {
+  await prisma.mealTemplate.delete({ where: { id } });
+  return { ok: true };
+}
+
+export async function logMealTemplate(date: string, templateId: string) {
+  const day = startOfDay(new Date(date));
+  const template = await prisma.mealTemplate.findUnique({
+    where: { id: templateId },
+    include: { items: { include: { foodItem: true } } },
+  });
+  if (!template) throw new Error("Meal template not found");
+
+  const checkIn = await prisma.dailyCheckIn.upsert({
+    where: { date: day },
+    update: {},
+    create: { date: day },
+  });
+
+  await prisma.$transaction(
+    template.items.map((item) =>
+      prisma.foodLogEntry.create({
+        data: {
+          checkInId: checkIn.id,
+          foodItemId: item.foodItemId,
+          quantity: item.quantity,
+          calories: Math.round(item.foodItem.caloriesPerServing * item.quantity),
+          protein: item.foodItem.proteinPerServing * item.quantity,
+          carbs: item.foodItem.carbsPerServing * item.quantity,
+          fat: item.foodItem.fatPerServing * item.quantity,
+        },
+      })
+    )
+  );
+
+  await recomputeCheckInTotals(checkIn.id);
+  revalidatePath("/");
+  revalidatePath("/history");
+  revalidatePath("/review");
+  return { logged: template.items.length };
+}
+
+export async function copyYesterdaysMeals(date: string) {
+  const day = startOfDay(new Date(date));
+  const yesterday = new Date(day);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const yesterdayCheckIn = await prisma.dailyCheckIn.findUnique({
+    where: { date: startOfDay(yesterday) },
+    include: { foodLog: true },
+  });
+  if (!yesterdayCheckIn || yesterdayCheckIn.foodLog.length === 0) {
+    return { logged: 0 };
+  }
+
+  const checkIn = await prisma.dailyCheckIn.upsert({
+    where: { date: day },
+    update: {},
+    create: { date: day },
+  });
+
+  await prisma.$transaction(
+    yesterdayCheckIn.foodLog.map((entry) =>
+      prisma.foodLogEntry.create({
+        data: {
+          checkInId: checkIn.id,
+          foodItemId: entry.foodItemId,
+          quantity: entry.quantity,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+        },
+      })
+    )
+  );
+
+  await recomputeCheckInTotals(checkIn.id);
+  revalidatePath("/");
+  revalidatePath("/history");
+  revalidatePath("/review");
+  return { logged: yesterdayCheckIn.foodLog.length };
+}

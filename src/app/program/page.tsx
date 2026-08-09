@@ -4,6 +4,7 @@ import { getProgramList } from "@/queries/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DuplicateProgramButton } from "@/components/program/duplicate-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,7 @@ export default async function ProgramPage() {
                     View Calendar
                   </Link>
                 </Button>
+                <DuplicateProgramButton programId={program.id} />
               </CardFooter>
             </Card>
           ))}

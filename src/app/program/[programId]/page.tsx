@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgramEditor } from "@/components/program/program-editor";
 import { ProgramPreview } from "@/components/program/program-preview";
+import { DuplicateWorkoutButton } from "@/components/program/duplicate-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -51,9 +52,12 @@ export default async function EditProgramPage({ params }: { params: Promise<{ pr
                   {workout.exercises.length} exercises
                 </CardDescription>
               </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/program/workout/${workout.id}`}>Edit</Link>
-              </Button>
+              <div className="flex shrink-0 gap-1">
+                <DuplicateWorkoutButton workoutId={workout.id} />
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/program/workout/${workout.id}`}>Edit</Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="pt-0">
               <ul className="space-y-1 text-sm">

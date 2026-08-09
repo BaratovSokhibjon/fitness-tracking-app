@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ForkKnife, Plus, Trash } from "@phosphor-icons/react";
+import { ArrowClockwise, ForkKnife, Plus, Trash } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { categoryLabels } from "@/components/foods/food-card";
-import { addFoodToLog, removeFoodFromLog, getFoodLogForDate, searchFoods } from "@/actions/foods";
+import { addFoodToLog, removeFoodFromLog, getFoodLogForDate, searchFoods, copyYesterdaysMeals } from "@/actions/foods";
 import { TargetProgress } from "@/components/today/target-progress";
+import { MealsButton } from "@/components/today/meals-dialog";
 
 export type FoodLogEntry = {
   id: string;
@@ -130,12 +131,20 @@ export function FoodLogSection({
   const [entries, setEntries] = useState<FoodLogEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
 
+  async function load() {
+    const data = await getFoodLogForDate(date);
+    setEntries(data.entries as unknown as FoodLogEntry[]);
+    setLoaded(true);
+  }
+
   useEffect(() => {
-    void (async () => {
-      const data = await getFoodLogForDate(date);
-      setEntries(data.entries as unknown as FoodLogEntry[]);
-      setLoaded(true);
-    })();
+    void load();
+  }, [date]);
+
+  useEffect(() => {
+    const handler = () => void load();
+    window.addEventListener("somatix:food-log-updated", handler);
+    return () => window.removeEventListener("somatix:food-log-updated", handler);
   }, [date]);
 
   async function handleRemove(entryId: string) {
@@ -154,6 +163,20 @@ export function FoodLogSection({
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
+  const [copying, setCopying] = useState(false);
+
+  async function handleCopyYesterday() {
+    setCopying(true);
+    try {
+      const res = await copyYesterdaysMeals(date);
+      await load();
+      router.refresh();
+      if (res.logged === 0) alert("Nothing was logged yesterday to copy.");
+    } finally {
+      setCopying(false);
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -161,7 +184,18 @@ export function FoodLogSection({
           <CardTitle className="text-base">Meal Log</CardTitle>
           <CardDescription>Logged foods for today</CardDescription>
         </div>
-        {loaded && <FoodSelector date={date} />}
+        <div className="flex shrink-0 items-center gap-1">
+          {loaded && (
+            <>
+              <MealsButton date={date} />
+              <Button variant="outline" size="sm" onClick={handleCopyYesterday} disabled={copying}>
+                <ArrowClockwise className="h-4 w-4" />
+                {copying ? "Copying…" : "Copy yesterday"}
+              </Button>
+              <FoodSelector date={date} />
+            </>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-4 gap-2 text-center">

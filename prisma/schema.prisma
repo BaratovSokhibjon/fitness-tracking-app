@@ -225,6 +225,7 @@ model FoodItem {
   updatedAt          DateTime     @updatedAt
 
   logEntries FoodLogEntry[]
+  mealTemplateItems MealTemplateItem[]
 
   @@unique([name])
 }
@@ -252,6 +253,30 @@ model FoodLogEntry {
 
   checkIn  DailyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
   foodItem FoodItem     @relation(fields: [foodItemId], references: [id], onDelete: Restrict)
+}
+
+model MealTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items MealTemplateItem[]
+
+  @@unique([name])
+}
+
+model MealTemplateItem {
+  id            String       @id @default(cuid())
+  mealTemplateId String
+  foodItemId    String
+  quantity      Float
+  createdAt     DateTime     @default(now())
+
+  mealTemplate MealTemplate @relation(fields: [mealTemplateId], references: [id], onDelete: Cascade)
+  foodItem     FoodItem     @relation(fields: [foodItemId], references: [id], onDelete: Restrict)
+
+  @@index([mealTemplateId])
 }
 
 // ─── Habits ─────────────────────────────────────────────

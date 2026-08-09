@@ -85,6 +85,7 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
             reps: l.reps,
             durationSec: l.durationSec,
             rpe: l.rpe,
+            notes: l.notes,
           })) ?? []
         }
         isCompleted={schedule.status === "COMPLETED"}

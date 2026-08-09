@@ -16,7 +16,7 @@ import { searchExerciseLibrary, createSessionExercise, deleteExercise } from "@/
 import { epley1RM } from "@/lib/utils";
 import type { ExerciseHistoryRow } from "@/queries/records";
 import type { WeekSchemeResult } from "@/lib/progression";
-import { computeWarmupSets, compareSession, type SessionComparison } from "@/lib/progression";
+import { computeWarmupSets, computePlateLoad, compareSession, type SessionComparison } from "@/lib/progression";
 
 type ExerciseType = "WEIGHTED" | "BODYWEIGHT" | "TIMED";
 
@@ -40,9 +40,10 @@ type Log = {
   reps: number | null;
   durationSec: number | null;
   rpe: number | null;
+  notes: string | null;
 };
 
-type SetState = { weight: number | null; reps: number | null; durationSec: number | null; rpe: string };
+type SetState = { weight: number | null; reps: number | null; durationSec: number | null; rpe: string; notes: string };
 
 type HistorySession = { date: Date; rows: ExerciseHistoryRow[] };
 
@@ -103,6 +104,7 @@ export function WorkoutSession({
           reps: log?.reps ?? null,
           durationSec: log?.durationSec ?? null,
           rpe: log?.rpe != null ? String(log.rpe) : "",
+          notes: log?.notes ?? "",
         });
       }
       map[ex.id] = rows;
@@ -177,11 +179,12 @@ export function WorkoutSession({
       reps: exercise.type !== "TIMED" ? row.reps : null,
       durationSec: exercise.type === "TIMED" ? row.durationSec : null,
       rpe: row.rpe ? parseFloat(row.rpe) : null,
+      notes: row.notes ? row.notes : null,
     };
   }
 
-  function finishSet(exercise: Exercise, index: number) {
-    const row = sets[exercise.id][index];
+  function finishSet(exercise: Exercise, index: number, overrides?: Partial<Pick<SetState, "reps" | "weight" | "durationSec">>) {
+    const row = { ...sets[exercise.id][index], ...overrides };
     const reps = exercise.type !== "TIMED" ? row.reps : null;
     const duration = exercise.type === "TIMED" ? row.durationSec : null;
     if (reps == null && duration == null) return;
@@ -205,10 +208,17 @@ export function WorkoutSession({
     await logSet({ scheduleId, ...buildLog(exercise, { ...row, rpe }, index + 1) });
   }
 
+  async function saveSetNotes(exercise: Exercise, index: number, notes: string) {
+    if (!notes) return; // nothing to persist
+    const row = sets[exercise.id][index];
+    await startSession(scheduleId);
+    await logSet({ scheduleId, ...buildLog(exercise, { ...row, notes }, index + 1) });
+  }
+
   function addSet(exerciseId: string) {
     setSets((prev) => ({
       ...prev,
-      [exerciseId]: [...(prev[exerciseId] ?? []), { weight: null, reps: null, durationSec: null, rpe: "" }],
+      [exerciseId]: [...(prev[exerciseId] ?? []), { weight: null, reps: null, durationSec: null, rpe: "", notes: "" }],
     }));
   }
 
@@ -252,7 +262,7 @@ export function WorkoutSession({
     setExtraExercises((prev) => [...prev, newEx]);
     setSets((prev) => ({
       ...prev,
-      [newEx.id]: [{ weight: null, reps: null, durationSec: null, rpe: "" }],
+      [newEx.id]: [{ weight: null, reps: null, durationSec: null, rpe: "", notes: "" }],
     }));
     setExtraOpen(false);
     setExtraQuery("");
@@ -280,7 +290,7 @@ export function WorkoutSession({
         .map((row, i) => {
           const reps = ex.type !== "TIMED" ? row.reps : null;
           const duration = ex.type === "TIMED" ? row.durationSec : null;
-          if (reps == null && duration == null) return null;
+          if (reps == null && duration == null && !row.notes) return null;
           return buildLog(ex, row, i + 1);
         })
         .filter((l): l is NonNullable<typeof l> => l !== null)
@@ -447,13 +457,29 @@ export function WorkoutSession({
             </CardHeader>
             <CardContent>
               {ex.type === "WEIGHTED" && ex.scheme?.weights?.[0] != null && (() => {
-                const warmups = computeWarmupSets(ex.scheme!.weights[0], 2.5);
-                if (warmups.length === 0) return null;
+                const workWeight = ex.scheme!.weights[0];
+                const warmups = computeWarmupSets(workWeight, 2.5);
+                const load = computePlateLoad(workWeight);
+                let loadLabel: string;
+                if (load.barOnly) {
+                  loadLabel = "just the bar";
+                } else if (load.perSide.length === 0) {
+                  loadLabel = `${workWeight}kg — below bar weight; use a lighter bar or dumbbells`;
+                } else if (load.leftover > 0.1) {
+                  loadLabel = `${load.perSide.map((p) => (p.count > 1 ? `${p.count}×${p.weight}` : `${p.weight}`)).join(" + ")} per side (+ ${load.leftover}kg odd)`;
+                } else {
+                  loadLabel = `${load.perSide.map((p) => (p.count > 1 ? `${p.count}×${p.weight}` : `${p.weight}`)).join(" + ")} per side`;
+                }
                 return (
                   <div className="mb-3 rounded-none border border-dashed border-hairline px-3 py-2">
                     <p className="text-xs font-medium uppercase tracking-wide text-mute">Warm-up</p>
+                    {warmups.length > 0 && (
+                      <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
+                        {warmups.map((w) => `${w.reps} × ${w.weight}kg`).join("  ·  ")}
+                      </p>
+                    )}
                     <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
-                      {warmups.map((w) => `${w.reps} × ${w.weight}kg`).join("  ·  ")}
+                      Work set: {workWeight}kg → {loadLabel}
                     </p>
                   </div>
                 );
@@ -508,7 +534,7 @@ export function WorkoutSession({
                         <NumberInput
                           value={row.durationSec}
                           onValueChange={(v) => updateNumeric(ex.id, i, "durationSec", v)}
-                          onCommit={() => finishSet(ex, i)}
+                          onCommit={(v) => finishSet(ex, i, { durationSec: v })}
                           min={0}
                           step={5}
                           decimals={0}
@@ -519,7 +545,7 @@ export function WorkoutSession({
                         <NumberInput
                           value={row.reps}
                           onValueChange={(v) => updateNumeric(ex.id, i, "reps", v)}
-                          onCommit={() => finishSet(ex, i)}
+                          onCommit={(v) => finishSet(ex, i, { reps: v })}
                           min={0}
                           step={1}
                           decimals={0}
@@ -531,7 +557,7 @@ export function WorkoutSession({
                         <NumberInput
                           value={row.weight}
                           onValueChange={(v) => updateNumeric(ex.id, i, "weight", v)}
-                          onCommit={() => finishSet(ex, i)}
+                          onCommit={(v) => finishSet(ex, i, { weight: v })}
                           min={0}
                           step={2.5}
                           decimals={1}
@@ -558,10 +584,20 @@ export function WorkoutSession({
                         </SelectContent>
                       </Select>
                       {est1RM != null && (
-                        <div className="col-span-4 text-right text-xs text-muted-foreground">
+                        <div className={ex.type === "WEIGHTED" ? "col-span-4 text-right text-xs text-muted-foreground" : "col-span-3 text-right text-xs text-muted-foreground"}>
                           est. 1RM: {est1RM} kg
                         </div>
                       )}
+                      <div className={ex.type === "WEIGHTED" ? "col-span-4" : "col-span-3"}>
+                        <Input
+                          className="h-7 text-xs"
+                          placeholder="Set note (optional)"
+                          value={row.notes}
+                          onChange={(e) => updateSet(ex.id, i, "notes", e.target.value)}
+                          onBlur={() => void saveSetNotes(ex, i, row.notes)}
+                          aria-label={`${ex.name} set ${i + 1} note`}
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -644,7 +680,7 @@ export function WorkoutSession({
                     <NumberInput
                       value={row.durationSec}
                       onValueChange={(v) => updateNumeric(ex.id, i, "durationSec", v)}
-                      onCommit={() => finishSet(ex, i)}
+                      onCommit={(v) => finishSet(ex, i, { durationSec: v })}
                       min={0}
                       step={5}
                       decimals={0}
@@ -655,7 +691,7 @@ export function WorkoutSession({
                     <NumberInput
                       value={row.reps}
                       onValueChange={(v) => updateNumeric(ex.id, i, "reps", v)}
-                      onCommit={() => finishSet(ex, i)}
+                      onCommit={(v) => finishSet(ex, i, { reps: v })}
                       min={0}
                       step={1}
                       decimals={0}
@@ -667,7 +703,7 @@ export function WorkoutSession({
                     <NumberInput
                       value={row.weight}
                       onValueChange={(v) => updateNumeric(ex.id, i, "weight", v)}
-                      onCommit={() => finishSet(ex, i)}
+                      onCommit={(v) => finishSet(ex, i, { weight: v })}
                       min={0}
                       step={2.5}
                       decimals={1}
@@ -693,6 +729,16 @@ export function WorkoutSession({
                       ))}
                     </SelectContent>
                   </Select>
+                  <div className={ex.type === "WEIGHTED" ? "col-span-4" : "col-span-3"}>
+                    <Input
+                      className="h-7 text-xs"
+                      placeholder="Set note (optional)"
+                      value={row.notes}
+                      onChange={(e) => updateSet(ex.id, i, "notes", e.target.value)}
+                      onBlur={() => void saveSetNotes(ex, i, row.notes)}
+                      aria-label={`${ex.name} set ${i + 1} note`}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

@@ -390,3 +390,31 @@ export function formatPreviewCell(week: ProgramPreviewExercise["weeks"][number])
   if (week.weights.length === 0 || week.reps.length === 0) return "—";
   return week.reps.map((r, i) => `${r}×${week.weights[i] ?? "—"}`).join(" ");
 }
+
+export interface PlateLoad {
+  perSide: { weight: number; count: number }[];
+  barOnly: boolean;
+  leftover: number;
+}
+
+// Standard plate set, in kg. Assume a 20kg bar.
+const PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
+
+export function computePlateLoad(totalWeight: number, barWeight = 20, plates = PLATES_KG): PlateLoad {
+  if (totalWeight <= 0) return { perSide: [], barOnly: false, leftover: 0 };
+  if (totalWeight <= barWeight) {
+    return { perSide: [], barOnly: totalWeight >= barWeight - 0.01, leftover: totalWeight < barWeight - 0.01 ? totalWeight : 0 };
+  }
+  const perSideWeight = (totalWeight - barWeight) / 2;
+  const perSide: { weight: number; count: number }[] = [];
+  let remaining = perSideWeight;
+  for (const plate of plates) {
+    if (remaining <= 0) break;
+    const count = Math.floor(remaining / plate + 1e-9);
+    if (count > 0) {
+      perSide.push({ weight: plate, count });
+      remaining -= count * plate;
+    }
+  }
+  return { perSide, barOnly: false, leftover: Math.round(remaining * 100) / 100 };
+}

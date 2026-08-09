@@ -34,6 +34,58 @@ export async function deleteWorkout(id: string) {
   return { ok: true };
 }
 
+export async function duplicateWorkout(id: string) {
+  const source = await prisma.workout.findUnique({
+    where: { id },
+    include: { exercises: true },
+  });
+  if (!source) throw new Error("Workout not found");
+
+  // Workout has @@unique([programId, dayOfWeek]) — pick the next free day in the
+  // same program so the copy always succeeds.
+  const takenDays = (
+    await prisma.workout.findMany({
+      where: { programId: source.programId },
+      select: { dayOfWeek: true },
+    })
+  ).map((w) => w.dayOfWeek);
+  if (takenDays.length >= 7) {
+    throw new Error("All 7 days already have a workout in this program.");
+  }
+  let dayOfWeek = source.dayOfWeek;
+  while (takenDays.includes(dayOfWeek)) {
+    dayOfWeek = (dayOfWeek + 1) % 7;
+    if (dayOfWeek === source.dayOfWeek) break; // all 7 days taken
+  }
+
+  const workout = await prisma.workout.create({
+    data: {
+      programId: source.programId,
+      name: `${source.name} (copy)`,
+      dayOfWeek,
+      notes: source.notes,
+      sortOrder: source.sortOrder,
+      exercises: {
+        create: source.exercises.map((e) => ({
+          exerciseId: e.exerciseId,
+          sets: e.sets,
+          minReps: e.minReps,
+          maxReps: e.maxReps,
+          startWeight: e.startWeight,
+          targetWeight: e.targetWeight,
+          restTime: e.restTime,
+          notes: e.notes,
+          sortOrder: e.sortOrder,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/program");
+  revalidatePath("/");
+  return workout;
+}
+
 // ─── Exercise Library ───────────────────────────────────
 
 export async function createExerciseLibrary(input: ExerciseLibraryInput) {
