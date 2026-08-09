@@ -27,6 +27,7 @@ export default async function ProfilePage() {
                 dailyFatTarget: profile.dailyFatTarget,
                 dailyWaterTarget: profile.dailyWaterTarget,
                 dailyStepsTarget: profile.dailyStepsTarget,
+                dailyCaffeineTarget: profile.dailyCaffeineTarget,
                 sleepTarget: profile.sleepTarget,
               }
             : null

@@ -6,6 +6,7 @@ import { HabitGrid } from "@/components/today/habit-grid";
 import { WaterCounter } from "@/components/today/water-counter";
 import { StepsCounter } from "@/components/today/steps-counter";
 import { CreatineCard } from "@/components/today/creatine-card";
+import { CaffeineCounter } from "@/components/today/caffeine-counter";
 import { PostWorkoutPrompt } from "@/components/today/post-workout-prompt";
 import { FoodLogSection } from "@/components/today/food-log";
 import { OnboardingCard } from "@/components/today/onboarding-card";
@@ -136,7 +137,7 @@ export default async function TodayPage() {
 
           <HabitGrid date={new Date().toISOString()} habits={data.todayHabits} />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <WaterCounter
               date={new Date().toISOString()}
               water={data.todayWater}
@@ -146,6 +147,11 @@ export default async function TodayPage() {
               date={new Date().toISOString()}
               steps={data.todaySteps}
               target={data.profile?.dailyStepsTarget ?? 10000}
+            />
+            <CaffeineCounter
+              date={new Date().toISOString()}
+              caffeineMg={data.todayCaffeine}
+              target={data.profile?.dailyCaffeineTarget ?? 400}
             />
           </div>
 

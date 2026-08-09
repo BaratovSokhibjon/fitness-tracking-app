@@ -142,6 +142,7 @@ export async function getTodayData() {
     })),
     todayWater: todayCheckIn?.water ?? 0,
     todaySteps: todayCheckIn?.steps ?? 0,
+    todayCaffeine: todayCheckIn?.caffeineMg ?? 0,
     profile,
     creatine,
     onboarding: {

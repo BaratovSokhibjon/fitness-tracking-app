@@ -52,3 +52,10 @@ export const stepsUpdateSchema = z.object({
 });
 
 export type StepsUpdateInput = z.infer<typeof stepsUpdateSchema>;
+
+export const caffeineIncrementSchema = z.object({
+  date: dateStr,
+  amount: z.number().int().min(0).max(2000),
+});
+
+export type CaffeineIncrementInput = z.infer<typeof caffeineIncrementSchema>;

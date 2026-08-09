@@ -3,7 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { stepsUpdateSchema, waterIncrementSchema, type StepsUpdateInput, type WaterIncrementInput } from "@/schemas/check-in";
+import {
+  stepsUpdateSchema,
+  waterIncrementSchema,
+  caffeineIncrementSchema,
+  type StepsUpdateInput,
+  type WaterIncrementInput,
+  type CaffeineIncrementInput,
+} from "@/schemas/check-in";
 
 export async function incrementWater(input: WaterIncrementInput) {
   const { date: dateStr, amount } = waterIncrementSchema.parse(input);
@@ -36,4 +43,22 @@ export async function updateSteps(input: StepsUpdateInput) {
   revalidatePath("/");
   revalidatePath("/history");
   return { steps };
+}
+
+export async function incrementCaffeine(input: CaffeineIncrementInput) {
+  const { date: dateStr, amount } = caffeineIncrementSchema.parse(input);
+  const date = startOfDay(new Date(dateStr));
+
+  const existing = await prisma.dailyCheckIn.findUnique({ where: { date } });
+  const caffeineMg = (existing?.caffeineMg ?? 0) + amount;
+
+  await prisma.dailyCheckIn.upsert({
+    where: { date },
+    update: { caffeineMg },
+    create: { date, caffeineMg },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/history");
+  return { caffeineMg };
 }

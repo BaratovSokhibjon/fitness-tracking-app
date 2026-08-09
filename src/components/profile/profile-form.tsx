@@ -20,6 +20,7 @@ export type ProfileData = {
   dailyFatTarget: number | null;
   dailyWaterTarget: number | null;
   dailyStepsTarget: number | null;
+  dailyCaffeineTarget: number | null;
   sleepTarget: number | null;
 };
 
@@ -35,6 +36,7 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
     dailyFatTarget: profile?.dailyFatTarget?.toString() ?? "",
     dailyWaterTarget: profile?.dailyWaterTarget?.toString() ?? "",
     dailyStepsTarget: profile?.dailyStepsTarget?.toString() ?? "",
+    dailyCaffeineTarget: profile?.dailyCaffeineTarget?.toString() ?? "",
     sleepTarget: profile?.sleepTarget?.toString() ?? "",
   });
   const [saving, setSaving] = useState(false);
@@ -66,6 +68,7 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
       dailyFatTarget: num(form.dailyFatTarget),
       dailyWaterTarget: num(form.dailyWaterTarget),
       dailyStepsTarget: num(form.dailyStepsTarget),
+      dailyCaffeineTarget: num(form.dailyCaffeineTarget),
       sleepTarget: num(form.sleepTarget),
     });
     setSaving(false);
@@ -80,6 +83,7 @@ export function ProfileForm({ profile }: { profile: ProfileData | null }) {
     { key: "dailyFatTarget", label: "Daily fat target (g)", placeholder: "70", step: 5, decimals: 0, min: 0, max: 500 },
     { key: "dailyWaterTarget", label: "Daily water target (ml)", placeholder: "3000", step: 250, decimals: 0, min: 0, max: 10000 },
     { key: "dailyStepsTarget", label: "Daily steps target", placeholder: "10000", step: 500, decimals: 0, min: 0, max: 100000 },
+    { key: "dailyCaffeineTarget", label: "Daily caffeine target (mg)", placeholder: "400", step: 25, decimals: 0, min: 0, max: 2000 },
     { key: "sleepTarget", label: "Sleep target (hours)", placeholder: "8", step: 0.5, decimals: 1, min: 0, max: 24 },
   ];
 

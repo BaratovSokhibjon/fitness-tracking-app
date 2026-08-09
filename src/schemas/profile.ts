@@ -10,6 +10,7 @@ export const profileSchema = z.object({
   dailyFatTarget: z.number().int().min(0).max(500).nullable().optional(),
   dailyWaterTarget: z.number().int().min(0).max(10000).nullable().optional(),
   dailyStepsTarget: z.number().int().min(0).max(100000).nullable().optional(),
+  dailyCaffeineTarget: z.number().int().min(0).max(2000).nullable().optional(),
   sleepTarget: z.number().min(0).max(24).nullable().optional(),
 });
 
