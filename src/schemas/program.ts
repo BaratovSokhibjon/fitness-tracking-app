@@ -4,7 +4,7 @@ export const programSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(2000).nullable().optional(),
   durationWeeks: z.number().int().min(1).max(52),
-  progressionType: z.enum(["LINEAR", "EXPONENTIAL"]).optional(),
+  progressionType: z.enum(["LINEAR", "EXPONENTIAL", "SINUSOIDAL"]).optional(),
   roundTo: z.number().min(0).max(100).optional(),
   isActive: z.boolean().optional(),
 });

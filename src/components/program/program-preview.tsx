@@ -85,8 +85,20 @@ export function ProgramPreview({
                         )}
                       </td>
                       {ex.weeks.map((w) => (
-                        <td key={w.week} className="border border-hairline px-2 py-1.5 text-center font-mono tabular-nums text-muted-foreground">
-                          {formatPreviewCell(w)}
+                        <td
+                          key={w.week}
+                          className={
+                            w.isDeload
+                              ? "border border-hairline bg-cloud px-2 py-1.5 text-center font-mono tabular-nums text-muted-foreground"
+                              : "border border-hairline px-2 py-1.5 text-center font-mono tabular-nums text-muted-foreground"
+                          }
+                          title={w.isDeload ? "Deload week" : undefined}
+                        >
+                          {w.isDeload ? (
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-mute">deload</span>
+                          ) : (
+                            formatPreviewCell(w)
+                          )}
                         </td>
                       ))}
                     </tr>

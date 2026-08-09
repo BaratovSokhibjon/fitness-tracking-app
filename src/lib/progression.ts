@@ -154,6 +154,14 @@ export interface WeekSchemeResult {
   targetIntensity: number;
   sets: SetScheme | null;
   weights: number[];
+  isDeload: boolean;
+}
+
+const DELOAD_INTERVAL = 4;
+
+function isDeloadWeek(week: number, totalWeeks: number): boolean {
+  if (week >= totalWeeks) return false; // final week is a peak, not a deload
+  return week % DELOAD_INTERVAL === 0;
 }
 
 export function computeWeekScheme(
@@ -181,24 +189,35 @@ export function computeWeekScheme(
   const tgt = targetWeight ?? startWeight;
   const roundTo = program.roundTo;
 
-  const k = program.progressionType === "EXPONENTIAL" ? 1 : 0;
+  const deload = isDeloadWeek(week, totalWeeks);
 
-  const estimated1RM = progressionDiffEq(week, startWeight, tgt, 1, totalWeeks, k);
+  let k = 0;
+  if (program.progressionType === "EXPONENTIAL") k = 1;
+  else if (program.progressionType === "SINUSOIDAL") k = 0.5;
+
+  let estimated1RM: number;
+  if (program.progressionType === "SINUSOIDAL") {
+    estimated1RM = progressionSinusoidal(week, startWeight, tgt, 1, totalWeeks, 4, 0.025, 0, k);
+  } else {
+    estimated1RM = progressionDiffEq(week, startWeight, tgt, 1, totalWeeks, k);
+  }
   const rounded1RM = roundToNearest(estimated1RM, roundTo);
 
-  const baseReps = (minReps + maxReps) / 2 * sets;
+  // Deload weeks: ~50% of the sets, ~15% lower average intensity.
+  const effectiveSets = deload ? Math.max(2, Math.round(sets * 0.5)) : sets;
+  const baseReps = (minReps + maxReps) / 2 * effectiveSets;
   const repScaler = DEFAULT_REP_SCALER(week, totalWeeks);
   const targetReps = Math.round(baseReps * repScaler);
 
   const intensityScaler = DEFAULT_INTENSITY_SCALER(week, totalWeeks);
   const defaultIntensity = repsToIntensity(Math.round((minReps + maxReps) / 2));
-  const targetIntensity = defaultIntensity * intensityScaler;
+  const targetIntensity = (defaultIntensity * intensityScaler) * (deload ? 0.85 : 1);
 
   const allowed = Array.from({ length: maxReps - minReps + 1 }, (_, i) => minReps + i);
   const intensities = allowed.map((r) => repsToIntensity(r));
 
   const scheme = optimizeSetScheme(allowed, intensities, targetReps, targetIntensity, {
-    sets,
+    sets: effectiveSets,
     minReps,
     maxReps,
   });
@@ -207,7 +226,7 @@ export function computeWeekScheme(
     ? scheme.intensities.map((i) => roundToNearest((rounded1RM * i) / 100, roundTo))
     : [];
 
-  return { week, estimated1RM: rounded1RM, targetReps, targetIntensity, sets: scheme, weights };
+  return { week, estimated1RM: rounded1RM, targetReps, targetIntensity, sets: scheme, weights, isDeload: deload };
 }
 
 export function formatSetScheme(scheme: SetScheme, weight: number, roundTo: number, units = "kg"): string[] {
@@ -327,6 +346,7 @@ export interface ProgramPreviewExercise {
     targetIntensity: number;
     weights: number[];
     reps: number[];
+    isDeload: boolean;
   }[];
 }
 
@@ -359,6 +379,7 @@ export function computeProgramPreview(
         targetIntensity: scheme?.targetIntensity ?? 0,
         weights: scheme?.weights ?? [],
         reps: scheme?.sets?.reps ?? [],
+        isDeload: scheme?.isDeload ?? false,
       });
     }
     return { ...ex, weeks };

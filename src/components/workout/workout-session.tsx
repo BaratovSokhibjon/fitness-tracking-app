@@ -429,6 +429,11 @@ export function WorkoutSession({
               {ex.notes && (
                 <CardDescription className="text-xs">{ex.notes}</CardDescription>
               )}
+              {ex.scheme?.isDeload && (
+                <CardDescription className="text-xs font-medium uppercase tracking-wide text-mute">
+                  Deload week — reduced sets &amp; intensity
+                </CardDescription>
+              )}
               {ex.scheme && (
                 <CardDescription className="font-mono tabular-nums text-success">
                   Target: ~{ex.scheme.estimated1RM}kg 1RM ·{" "}

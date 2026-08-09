@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Program` MODIFY `progressionType` ENUM('LINEAR', 'EXPONENTIAL', 'SINUSOIDAL') NOT NULL DEFAULT 'LINEAR';

@@ -169,7 +169,7 @@ export async function getExercise1RMTrends(limit = 20) {
       exercise: { include: { exercise: { select: { name: true, type: true } } } },
       session: { select: { date: true, id: true } },
     },
-    orderBy: [{ session: { date: "asc" } }, { setNumber: "asc" }],
+    orderBy: [{ session: { date: "desc" } }, { setNumber: "asc" }],
     take: limit * 30,
   });
 

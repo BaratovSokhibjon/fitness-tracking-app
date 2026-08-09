@@ -95,6 +95,7 @@ export function ProgramEditor({ program }: { program: ProgramEditorData }) {
               <SelectContent>
                 <SelectItem value="LINEAR">Linear</SelectItem>
                 <SelectItem value="EXPONENTIAL">Exponential</SelectItem>
+                <SelectItem value="SINUSOIDAL">Sinusoidal (wave)</SelectItem>
               </SelectContent>
             </Select>
           </div>

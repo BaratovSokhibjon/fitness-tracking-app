@@ -119,6 +119,7 @@ enum ExerciseType {
 enum ProgressionType {
   LINEAR
   EXPONENTIAL
+  SINUSOIDAL
 }
 
 // ─── Workout Calendar ───────────────────────────────────
